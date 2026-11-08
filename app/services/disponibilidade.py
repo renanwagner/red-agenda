@@ -1,11 +1,6 @@
 """Regras de disponibilidade da Tela 2/3/4 (RF01, RF02). Sem Flask nem acesso a banco."""
 
 
-def ids_livres(disponibilidade, hora):
-    """Ids dos barbeiros livres no horário, segundo o mapa {hora: (ids,)}."""
-    return tuple(disponibilidade.get(hora, ()))
-
-
 def caso_disponibilidade(id_barbeiro, ids_livres_hora, qualquer):
     """Caso da Tela 2: a (livre), b (ocupado), c (qualquer com livres) ou d (qualquer sem livres)."""
     if id_barbeiro == qualquer:

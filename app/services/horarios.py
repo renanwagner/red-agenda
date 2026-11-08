@@ -5,6 +5,8 @@ Intervalos são pares (início, fim) de datetime, fechados no início e abertos 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+PASSO_MIN = 30  # intervalo entre os horários oferecidos na Tela 1
+
 
 @dataclass
 class AgendaDoDia:
@@ -47,6 +49,23 @@ def barbeiro_livre(inicio, fim, agenda):
 def barbeiros_livres(inicio, fim, agendas):
     """Ids dos barbeiros livres no intervalo, em ordem. `agendas`: {id_barbeiro: AgendaDoDia}."""
     return sorted(i for i, agenda in agendas.items() if barbeiro_livre(inicio, fim, agenda))
+
+
+def horarios_de_atendimento(agendas, passo_min=PASSO_MIN):
+    """Tela 1: inícios "HH:MM" de `passo_min` em `passo_min` (alinhados ao relógio) dentro de alguma
+    janela aberta e fora de bloqueio. Agendamento não tira o horário: ocupado vira fila (caso d)."""
+    passo = timedelta(minutes=passo_min)
+    inicios = set()
+    for agenda in agendas.values():
+        for ini, fim in _unir(agenda.abertas):
+            meia_noite = ini.replace(hour=0, minute=0, second=0, microsecond=0)
+            passos = -(-(ini - meia_noite) // passo)  # arredonda para cima
+            t = meia_noite + passos * passo
+            while t < fim:
+                if not any(b0 <= t < b1 for b0, b1 in agenda.bloqueadas):
+                    inicios.add(t)
+                t += passo
+    return [t.strftime("%H:%M") for t in sorted(inicios)]
 
 
 def sugestoes(id_escolhido, livres):

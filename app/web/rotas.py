@@ -1,11 +1,14 @@
-"""Rotas do fluxo do cliente (protótipo, sem banco).
+"""Rotas do fluxo do cliente.
 
 Fluxo: Tela 1 (escolha) → Tela 2 (disponibilidade) → Tela 3 (dados) → Tela 4 (resultado).
+Serviços, barbeiros, horários e disponibilidade vêm da camada de regras (que lê o banco).
 """
-from datetime import date
+from datetime import date, time
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
+from app.services import catalogo
+from app.services import consulta_disponibilidade as consulta
 from app.services import disponibilidade as regras
 from app.web import dados_demo as demo
 from app.web.formularios import DadosForm
@@ -14,6 +17,7 @@ bp = Blueprint("web", __name__)
 
 MODOS = ("confirmacao", "fila_horario", "fila_barbeiro")
 ESTADO_DO_MODO = {"confirmacao": "confirmado", "fila_horario": "fila_horario", "fila_barbeiro": "fila_barbeiro"}
+OPCAO_QUALQUER = {"id_barbeiro": demo.QUALQUER, "nome": demo.NOME_QUALQUER}
 
 
 # ---------- auxiliares de apresentação ----------
@@ -26,15 +30,11 @@ def _por_id(lista, chave, valor):
     return next((item for item in lista if item[chave] == valor), None)
 
 
-def _servico(valor):
-    return _por_id(demo.SERVICOS, "id_servico", valor)
-
-
-def _barbeiro(valor):
-    """Barbeiro específico, "qualquer" ou None se inválido."""
+def _barbeiro(valor, barbeiros):
+    """Barbeiro ativo, a opção "qualquer" ou None se inválido."""
     if valor == demo.QUALQUER:
-        return {"id_barbeiro": demo.QUALQUER, "nome": demo.NOME_QUALQUER}
-    return _por_id(demo.BARBEIROS, "id_barbeiro", valor)
+        return OPCAO_QUALQUER
+    return _por_id(barbeiros, "id_barbeiro", valor)
 
 
 def _data(valor):
@@ -42,10 +42,6 @@ def _data(valor):
         return date.fromisoformat(valor)
     except (TypeError, ValueError):
         return None
-
-
-def _hora(valor):
-    return valor if valor in demo.HORARIOS else None
 
 
 def data_br(d):
@@ -56,13 +52,17 @@ def servico_txt(s):
     return f"{s['nome']} – {s['duracao_min']} min"
 
 
-def _selecao(args):
+def _selecao(args, data_padrao=None):
+    """Escolha da URL validada no servidor: só serviço, barbeiro e horário que existem na data."""
+    data = _data(args.get("data")) or data_padrao
+    hora = args.get("hora")
+    horarios = consulta.horarios_do_dia(data) if data else []
     return {
-        "servico": _servico(args.get("servico")),
-        "data": _data(args.get("data")),
-        "hora": _hora(args.get("hora")),
-        "barbeiro": _barbeiro(args.get("barbeiro")),
-    }
+        "servico": _por_id(catalogo.servicos_ativos(), "id_servico", args.get("servico")),
+        "data": data,
+        "hora": hora if hora in horarios else None,
+        "barbeiro": _barbeiro(args.get("barbeiro"), catalogo.barbeiros_ativos()),
+    }, horarios
 
 
 def _params(sel, **extra):
@@ -84,14 +84,15 @@ def _completa(sel):
     return all(sel.values())
 
 
-def _livres(hora):
-    """Barbeiros livres no horário, segundo os dados de demonstração."""
-    return [_barbeiro(i) for i in regras.ids_livres(demo.DISPONIBILIDADE, hora)]
+def _ids_livres(sel):
+    """Ids dos barbeiros em que o serviço escolhido cabe no horário escolhido."""
+    return consulta.barbeiros_livres_no_horario(
+        sel["servico"]["id_servico"], sel["data"], time.fromisoformat(sel["hora"])
+    )
 
 
 def _modo_coerente(sel, modo):
-    livres_ids = regras.ids_livres(demo.DISPONIBILIDADE, sel["hora"])
-    return regras.modo_coerente(modo, sel["barbeiro"]["id_barbeiro"], livres_ids, demo.QUALQUER)
+    return regras.modo_coerente(modo, sel["barbeiro"]["id_barbeiro"], _ids_livres(sel), demo.QUALQUER)
 
 
 @bp.app_context_processor
@@ -108,16 +109,14 @@ def escolha():
     campo, _, valor = args.pop("escolher", "").partition(":")
     if campo in ("servico", "hora", "barbeiro"):
         args[campo] = valor
-    sel = _selecao(args)
-    if not sel["data"]:
-        sel["data"] = demo.DATA_PADRAO
+    sel, horarios = _selecao(args, data_padrao=demo.DATA_PADRAO)
     if not sel["barbeiro"]:
-        sel["barbeiro"] = _barbeiro(demo.QUALQUER)
+        sel["barbeiro"] = OPCAO_QUALQUER
     return render_template(
         "tela1_escolha.html",
-        servicos=demo.SERVICOS,
-        horarios=demo.HORARIOS,
-        barbeiros=[_barbeiro(demo.QUALQUER), *demo.BARBEIROS],
+        servicos=catalogo.servicos_ativos(),
+        horarios=horarios,
+        barbeiros=[OPCAO_QUALQUER, *catalogo.barbeiros_ativos()],
         sel=sel,
         completa=_completa(sel),
         foco_data=request.args.get("foco") == "data",
@@ -128,15 +127,14 @@ def escolha():
 
 @bp.get("/disponibilidade")
 def disponibilidade():
-    sel = _selecao(request.args)
+    sel, _ = _selecao(request.args)
     if not _completa(sel):
         return redirect(url_for("web.escolha", **_params(sel)))
-    livres = _livres(sel["hora"])
+    ids_livres = _ids_livres(sel)
     barbeiro = sel["barbeiro"]
-    caso = regras.caso_disponibilidade(
-        barbeiro["id_barbeiro"], [b["id_barbeiro"] for b in livres], demo.QUALQUER
-    )
-    outros = [b for b in livres if b != barbeiro]
+    caso = regras.caso_disponibilidade(barbeiro["id_barbeiro"], ids_livres, demo.QUALQUER)
+    livres = [b for b in catalogo.barbeiros_ativos() if b["id_barbeiro"] in ids_livres]
+    outros = [b for b in livres if b["id_barbeiro"] != barbeiro["id_barbeiro"]]
     return render_template(
         "tela2_disponibilidade.html",
         sel=sel,
@@ -149,7 +147,7 @@ def disponibilidade():
 # ---------- Tela 3: dados do cliente ----------
 
 def _sel_tela3():
-    sel = _selecao(request.args)
+    sel, _ = _selecao(request.args)
     modo = request.args.get("modo")
     if not _completa(sel):
         return None, None, redirect(url_for("web.escolha", **_params(sel)))
@@ -185,7 +183,7 @@ def enviar_dados():
         return desvio
     form = DadosForm()
     if form.validate_on_submit():
-        # Protótipo: não grava. Nome e telefone não vão para a URL.
+        # Ainda não grava (etapa 3). Nome e telefone não vão para a URL.
         return redirect(url_for("web.resultado", estado=ESTADO_DO_MODO[modo], **_params(sel)))
     return _render_tela3(sel, modo, form)
 
@@ -196,7 +194,7 @@ def enviar_dados():
 def resultado(estado):
     if estado not in ESTADO_DO_MODO.values():
         abort(404)
-    sel = _selecao(request.args)
+    sel, _ = _selecao(request.args)
     if not _completa(sel):
         return redirect(url_for("web.escolha"))
     if not regras.estado_coerente(estado, sel["barbeiro"]["id_barbeiro"], demo.QUALQUER):

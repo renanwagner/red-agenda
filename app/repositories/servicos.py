@@ -14,6 +14,15 @@ SERVICOS_INICIAIS = (
 )
 
 
+def servicos_ativos():
+    """Serviços ativos em ordem de id, como dicionários (id_servico, nome, duracao_min)."""
+    linhas = db.session.execute(
+        select(Servico.id_servico, Servico.nome, Servico.duracao_min)
+        .where(Servico.ativo.is_(True)).order_by(Servico.id_servico)
+    )
+    return [dict(linha._mapping) for linha in linhas]
+
+
 def carregar_servicos_iniciais():
     """Cria os serviços que faltam, sem duplicar nem sobrescrever os existentes. Devolve quantos criou."""
     existentes = set(db.session.scalars(select(Servico.nome)))

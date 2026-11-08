@@ -64,3 +64,14 @@ def test_rf03_sugere_os_outros_livres():
     assert sugestoes(1, [2, 3]) == [2, 3]
     assert sugestoes(2, [2, 3]) == [3]
     assert sugestoes(1, []) == []
+
+
+def test_horarios_de_atendimento_de_30_em_30_dentro_das_janelas():
+    from app.services.horarios import horarios_de_atendimento
+    agendas = {
+        1: AgendaDoDia(abertas=[(h(9, 30), h(11, 30))], ocupados=[(h(9, 30), h(11, 30))]),
+        2: AgendaDoDia(abertas=[(h(13, 10), h(14))], bloqueadas=[(h(13, 30), h(14))]),
+    }
+    # Ocupado não tira o horário da lista (vira fila); bloqueio tira; início alinhado em :00/:30
+    assert horarios_de_atendimento(agendas) == ["09:30", "10:00", "10:30", "11:00"]
+    assert horarios_de_atendimento({}) == []
