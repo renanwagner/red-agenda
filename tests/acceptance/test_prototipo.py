@@ -24,10 +24,11 @@ def _token(html):
 
 
 URL_DADOS = _url("/dados", hora="10:00", barbeiro=2, modo="confirmacao")
-URL_RESULT = {
-    "confirmado": _url("/resultado/confirmado", hora="10:00", barbeiro=2),
-    "fila_horario": _url("/resultado/fila_horario", hora="11:00", barbeiro="qualquer"),
-    "fila_barbeiro": _url("/resultado/fila_barbeiro", hora="10:00", barbeiro=1),
+# Tela 4 vem do servidor (etapa 5): para vê-la, envia-se a Tela 3 antes
+URL_ENVIO = {
+    "confirmado": URL_DADOS,
+    "fila_horario": _url("/dados", hora="11:00", barbeiro="qualquer", modo="fila_horario"),
+    "fila_barbeiro": _url("/dados", hora="10:00", barbeiro=1, modo="fila_barbeiro"),
 }
 TODAS = [
     "/",
@@ -39,15 +40,23 @@ TODAS = [
     URL_DADOS,
     _url("/dados", hora="10:00", barbeiro=1, modo="fila_barbeiro"),
     _url("/dados", hora="11:00", barbeiro="qualquer", modo="fila_horario"),
-    *URL_RESULT.values(),
+    *(f"resultado:{estado}" for estado in URL_ENVIO),
 ]
 
 
 def _post_dados(client, url=URL_DADOS, **campos):
     dados = {"nome": CLIENTE_EXEMPLO["nome"], "telefone": CLIENTE_EXEMPLO["telefone"],
-             "csrf_token": _token(_html(client.get(url)))}
+             "csrf_token": _token(_html(_get(client, url)))}
     dados.update(campos)
     return client.post(url, data=dados)
+
+
+def _get(client, url):
+    """GET comum, ou "resultado:<estado>": envia a Tela 3 e abre a Tela 4."""
+    if url.startswith("resultado:"):
+        _post_dados(client, url=URL_ENVIO[url.split(":", 1)[1]])
+        return client.get("/resultado")
+    return client.get(url)
 
 
 # ---------- Tela 1 ----------
@@ -142,7 +151,7 @@ def test_tela2_resumo_e_voltar_mantem_escolha(client):
 @pytest.mark.parametrize("url", ["/disponibilidade", _url("/disponibilidade", hora="12:00", barbeiro=2),
                                  _url("/disponibilidade", hora="10:00", barbeiro=9)])
 def test_tela2_parametros_invalidos_redirecionam(client, url):
-    resp = client.get(url)
+    resp = _get(client, url)
     assert resp.status_code == 302
     assert resp.headers["Location"].startswith("/?") or resp.headers["Location"] == "/"
 
@@ -158,7 +167,7 @@ def test_tela2_parametros_invalidos_redirecionam(client, url):
      "Entrar na fila de espera"),
 ])
 def test_tela3_textos_por_modo(client, url, resumo, botao):
-    html = _html(client.get(url))
+    html = _html(_get(client, url))
     assert "Seus dados" in html and resumo in html and botao in html and "Voltar" in html
     assert '<label class="rotulo" for="nome">Nome</label>' in html
     assert '<label class="rotulo" for="telefone">Telefone (com DDD)</label>' in html
@@ -188,16 +197,12 @@ def test_tela3_nome_vazio_mostra_erro(client):
     assert "Informe seu nome." in _html(resp)
 
 
-@pytest.mark.parametrize("url,destino", [
-    (URL_DADOS, "/resultado/confirmado"),
-    (_url("/dados", hora="10:00", barbeiro=1, modo="fila_barbeiro"), "/resultado/fila_barbeiro"),
-    (_url("/dados", hora="11:00", barbeiro="qualquer", modo="fila_horario"), "/resultado/fila_horario"),
-])
-def test_tela3_sucesso_redireciona_sem_dados_pessoais(client, url, destino):
+@pytest.mark.parametrize("url", list(URL_ENVIO.values()))
+def test_tela3_sucesso_redireciona_sem_dados_pessoais(client, url):
     resp = _post_dados(client, url=url)
     assert resp.status_code == 302
     local = resp.headers["Location"]
-    assert local.startswith(destino)
+    assert local == "/resultado"
     assert "telefone" not in local and "90000" not in local and "nome" not in local
     assert "Cliente" not in _html(client.get(local))
 
@@ -225,7 +230,7 @@ def test_tela3_script_no_nome_e_escapado(client):
                        "Voltar ao início"]),
 ])
 def test_tela4_estados(client, estado, textos):
-    resp = client.get(URL_RESULT[estado])
+    resp = _get(client, f"resultado:{estado}")
     assert resp.status_code == 200
     html = _html(resp)
     for texto in textos:
@@ -239,15 +244,16 @@ def test_tela4_estado_invalido_404(client):
     assert "Traceback" not in _html(resp)
 
 
-def test_tela4_parametros_invalidos_voltam_ao_inicio(client):
-    assert client.get("/resultado/confirmado").status_code == 302
+def test_tela4_sem_envio_volta_ao_inicio(client):
+    resp = client.get("/resultado")
+    assert resp.status_code == 302 and resp.headers["Location"] == "/"
 
 
 # ---------- todas as telas ----------
 
 @pytest.mark.parametrize("url", TODAS)
 def test_datas_em_ptbr_sem_data_errada(client, url):
-    html = _html(client.get(url))
+    html = _html(_get(client, url))
     assert '<html lang="pt-BR">' in html
     assert "11/03/2026" not in html
     assert not re.search(r"\b11/14/2026\b", html)  # nada em mm/dd/aaaa
@@ -255,7 +261,7 @@ def test_datas_em_ptbr_sem_data_errada(client, url):
 
 @pytest.mark.parametrize("url", TODAS)
 def test_sem_script_inline_e_com_csp(client, url):
-    resp = client.get(url)
+    resp = _get(client, url)
     html = _html(resp)
     for tag in re.findall(r"<script[^>]*>", html, re.I):
         assert re.search(r'src="/static/', tag), tag  # só arquivo local
@@ -266,7 +272,7 @@ def test_sem_script_inline_e_com_csp(client, url):
 
 @pytest.mark.parametrize("url", TODAS)
 def test_sem_recursos_externos_e_logo(client, url):
-    html = _html(client.get(url))
+    html = _html(_get(client, url))
     assert not re.search(r'(src|href)="https?://', html)
     assert 'src="/static/img/logo-red.png" alt="Logo RED Barbearia"' in html
 
@@ -305,6 +311,6 @@ def test_erro_500_forcado_e_generico_sem_rastreio():
 @pytest.mark.parametrize("url", TODAS)
 def test_pagina_nao_pode_ser_exibida_em_iframe(client, url):
     """RNF02: X-Frame-Options impede clickjacking; a CSP não muda."""
-    resp = client.get(url)
+    resp = _get(client, url)
     assert resp.headers["X-Frame-Options"] == "DENY"
     assert resp.headers["Content-Security-Policy"] == "default-src 'self'"

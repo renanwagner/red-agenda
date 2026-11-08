@@ -20,7 +20,7 @@ Por que é proporcional ao MVP:
 | psycopg 3.x | driver do PostgreSQL (só na entrega) |
 | pytest 8.x + pytest-cov 6.x | testes das regras e aceitação; cobertura |
 | Gunicorn 23.x | servidor de aplicação em produção |
-| HTML5, CSS3, JS pontual | telas responsivas, leves; JS só para atualizar a lista de horários sem recarregar |
+| HTML5, CSS3, JS pontual | telas responsivas, leves; JS só para pequenos ajustes de interface (hoje, `static/js/tela1.js` aplica a data ao escolher); sem regra de negócio no navegador |
 
 Fora de propósito: framework de front-end, outros pacotes sem contribuição clara. As versões acima são as séries pretendidas; confirmar ao instalar.
 

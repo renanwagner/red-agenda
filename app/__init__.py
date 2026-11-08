@@ -5,6 +5,8 @@ from datetime import timedelta
 from flask import Flask, render_template
 from flask_wtf.csrf import CSRFProtect
 
+from app.models import db
+
 csrf = CSRFProtect()
 
 
@@ -14,6 +16,7 @@ def create_app(config=None):
     # Segredos e modo vêm do ambiente (RNF01/RNF02)
     app.config.update(
         SECRET_KEY=os.environ.get("SECRET_KEY"),
+        SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///red_agenda.db"),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SECURE=True,
         SESSION_COOKIE_SAMESITE="Lax",
@@ -26,10 +29,13 @@ def create_app(config=None):
         raise RuntimeError("Defina a variável de ambiente SECRET_KEY.")
 
     csrf.init_app(app)
+    db.init_app(app)
 
+    from app.web import painel
     from app.web.rotas import bp
 
     app.register_blueprint(bp)
+    painel.iniciar(app)
 
     @app.after_request
     def cabecalhos_seguranca(resposta):

@@ -1,0 +1,50 @@
+{% from "_icones.html" import icone %}
+
+{# Mensagens do painel: sucesso anunciado (status) e erro com ícone (assertive) #}
+{% macro avisos(erro=None) -%}
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+<div aria-live="polite" role="status">
+  {% for categoria, texto in mensagens if categoria == 'sucesso' %}
+  <p class="alerta alerta--sucesso">{{ icone('check') }}<span>{{ texto }}</span></p>
+  {% endfor %}
+</div>
+<div aria-live="assertive">
+  {% for categoria, texto in mensagens if categoria == 'erro' %}
+  <p class="erro">{{ icone('erro') }}<span>{{ texto }}</span></p>
+  {% endfor %}
+  {% if erro %}<p class="erro" id="janela-erro">{{ icone('erro') }}<span>{{ erro }}</span></p>{% endif %}
+</div>
+{% endwith %}
+{%- endmacro %}
+
+{% macro campo_hora(f, foco) -%}
+<div class="grupo-campo">
+  {{ f.label(class_="rotulo") }}
+  {% if f.errors %}
+  {{ f(class_="campo campo--hora campo--erro", type="time", step="300", autofocus=foco,
+       **{"aria-invalid": "true", "aria-describedby": f.id ~ "-erro"}) }}
+  {% else %}
+  {{ f(class_="campo campo--hora", type="time", step="300") }}
+  {% endif %}
+  <div aria-live="assertive">
+    {% if f.errors %}<p class="erro" id="{{ f.id }}-erro">{{ icone('erro') }}<span>{{ f.errors[0] }}</span></p>{% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro campos(form) -%}
+{{ form.csrf_token }}
+{{ campo_hora(form.inicio, form.inicio.errors|length > 0) }}
+{{ campo_hora(form.fim, form.fim.errors|length > 0 and not form.inicio.errors) }}
+<fieldset class="bloco">
+  <legend>Tipo</legend>
+  <div class="grade-botoes">
+    {% for valor, texto in [("aberto", "Aberta"), ("bloqueado", "Bloqueada")] %}
+    <label class="opcao opcao--radio" for="tipo-{{ valor }}">
+      <input type="radio" id="tipo-{{ valor }}" name="tipo" value="{{ valor }}"{% if form.tipo.data == valor %} checked{% endif %}>
+      {{ texto }}</label>
+    {% endfor %}
+  </div>
+</fieldset>
+<button type="submit" class="botao botao--principal">Salvar janela</button>
+{%- endmacro %}

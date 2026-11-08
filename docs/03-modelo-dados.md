@@ -14,7 +14,7 @@ Profissional que atende e acessa o painel.
 | ativo | lógico | padrão verdadeiro |
 
 Regras: `senha_hash` nunca é exibida nem registrada em log. Barbeiro inativo some do agendamento e das sugestões, mas o histórico fica (inativa-se, não exclui). Só o administrador edita serviços e cria barbeiros.
-Relações: 1 barbeiro → N janelas_atendimento; 1 → N agendamentos; pode ser preferência de N entradas de lista_espera (opcional).
+Relações: 1 barbeiro → N janelas_atendimento; 1 → N agendamentos; pode ser o barbeiro de N entradas da fila `fila_barbeiro` em lista_espera (opcional).
 
 ## cliente
 Quem agenda pelo link. Guarda só o necessário para identificar e chamar pelo WhatsApp. Quando é um responsável, o nome é o de quem agenda.
@@ -72,24 +72,26 @@ Relações: N agendamentos → 1 cliente, 1 barbeiro, 1 servico.
 Índice sugerido: `(barbeiro_id, inicio)`.
 
 ## lista_espera
-Fila de quem não achou vaga; permite chamar o próximo compatível quando um cancelamento libera horário.
+Fila de quem não achou vaga no horário desejado; permite chamar o próximo compatível quando um cancelamento libera horário. Há dois tipos de fila: do barbeiro (`barbeiro_id` preenchido) e por horário (`barbeiro_id` nulo).
 | Campo | Tipo | Regras |
 |---|---|---|
 | id_espera | inteiro PK | automático |
 | cliente_id, servico_id | refs | obrigatórias |
-| barbeiro_id | ref | opcional (preferência) |
+| barbeiro_id | ref | opcional; preenchido = fila do barbeiro, **nulo = fila por horário** |
 | data_desejada | data | obrigatória |
+| hora_desejada | hora | obrigatória; um dos horários da Tela 1; comparada por igualdade com o início do horário liberado |
 | entrou_em | data/hora | automático; define a ordem |
 | status | texto | `aguardando`, `chamado`, `atendido` ou `desistiu` |
 
-Regras: sem duas entradas `aguardando` do mesmo cliente para o mesmo serviço e data. Ordem de chamada por `entrou_em`. Ao chamar → `chamado`; ao agendar → `atendido`. O desfecho **não é apagado** (alimenta a taxa de recuperação).
+Regras: sem duas entradas `aguardando` do mesmo cliente para o mesmo serviço, data, hora e barbeiro (o nulo conta como valor). Ordem de chamada: primeiro a fila do barbeiro liberado e, se não houver compatível, a fila por horário; dentro de cada fila, por `entrou_em`. Ao chamar → `chamado`; ao agendar → `atendido`. O desfecho **não é apagado** (alimenta a taxa de recuperação).
 Relações: N entradas → 1 cliente, 1 servico, opcionalmente 1 barbeiro.
+Índice sugerido: `(data_desejada, hora_desejada, status)`.
 
 ## Fluxo de dados (CRUD por momento)
-1. **Consulta de horários:** lê servico, janela_atendimento e agendamento; calcula blocos livres; não grava. Sem vaga, lê os mesmos dados dos outros barbeiros ativos para sugerir.
+1. **Consulta de disponibilidade:** dados serviço, data e horário, lê servico, janela_atendimento e agendamento; calcula quais barbeiros ativos estão livres naquele horário; não grava. Sem o barbeiro escolhido livre, os livres são a sugestão.
 2. **Confirmação:** cria ou reaproveita cliente (telefone único) e cria agendamento `confirmado`/`link`, em transação que revalida sobreposição.
-3. **Sem vaga:** cria lista_espera `aguardando`.
-4. **Cancelamento (painel):** atualiza agendamento → `cancelado`; consulta lista_espera e indica o próximo (`chamado`); se agendar → `atendido`.
+3. **Sem vaga:** cria lista_espera `aguardando` (com `hora_desejada`; `barbeiro_id` nulo se aceita qualquer barbeiro).
+4. **Cancelamento (painel, se sobrar tempo):** atualiza agendamento → `cancelado`; consulta a fila do barbeiro e depois a por horário, e indica o próximo (`chamado`); se agendar → `atendido`.
 5. **Painel:** cria/altera/exclui janelas_atendimento; lê agendamentos do dia e da semana.
 
 ## Minimização

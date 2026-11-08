@@ -5,9 +5,9 @@ Padrão: RFxx (prioridade) — comportamento, usuário, regra, evidência, depen
 ## Requisitos funcionais
 
 ### RF01 (Obrigatório) — Exibir horários livres
-- **Comportamento:** exibir ao cliente, na página pública, os horários livres de um barbeiro em uma data, depois de escolhido o serviço; só aparecem horários em que o serviço cabe inteiro antes do próximo agendamento confirmado ou bloqueio.
-- **Regra:** blocos livres usam a duração do serviço e consideram só janelas abertas, fora das bloqueadas e sem agendamentos confirmados do barbeiro.
-- **Teste:** janela aberta 09:00–10:00 e agendamento confirmado 09:00–09:30 → serviço de 45 min não lista nada; o de 30 min lista 09:30.
+- **Comportamento:** o cliente escolhe serviço, data e horário; a página pública informa **quais barbeiros estão livres naquele horário**. Só conta o barbeiro em que o serviço cabe inteiro antes do próximo agendamento confirmado ou bloqueio.
+- **Regra:** blocos livres usam a duração do serviço e consideram só janelas abertas, fora das bloqueadas e sem agendamentos confirmados do barbeiro. Barbeiro inativo não aparece. O limite de horários por dia é o que as janelas abertas (RF07) definem.
+- **Teste:** janela aberta 09:00–10:00 e agendamento confirmado 09:00–09:30 → serviço de 45 min não lista nenhum barbeiro livre às 09:30; o de 30 min lista o barbeiro às 09:30.
 - **Depende de:** RF07.
 
 ### RF02 (Obrigatório) — Registrar agendamento
@@ -17,21 +17,21 @@ Padrão: RFxx (prioridade) — comportamento, usuário, regra, evidência, depen
 - **Depende de:** RF01.
 
 ### RF03 (Obrigatório) — Sugerir outro barbeiro
-- **Comportamento:** sugerir horários livres de outros barbeiros ativos, para o mesmo serviço e data, quando o escolhido não tem vaga; o cliente pode confirmar no mesmo fluxo.
+- **Comportamento:** quando o barbeiro escolhido não está livre no horário, sugerir os **barbeiros livres no mesmo horário**, para o mesmo serviço e data; o cliente escolhe um deles (não há troca automática) ou entra na fila do barbeiro escolhido. Com "Qualquer barbeiro", a tela já lista os livres.
 - **Regra:** só barbeiros ativos com janela aberta e bloco compatível com a duração; a sugestão é opcional.
-- **Teste:** barbeiro A lotado e B livre → consulta a A devolve horários de B; sem ninguém livre → lista vazia.
+- **Teste:** barbeiro A ocupado e B livre às 10:00 → consulta a A às 10:00 devolve B; sem ninguém livre → lista vazia.
 - **Depende de:** RF01, RF02.
 
 ### RF04 (Obrigatório) — Lista de espera
-- **Comportamento:** incluir o cliente na lista de espera quando não há horário livre para o serviço e a data e ele opta por aguardar; status `aguardando`, com data/hora de entrada.
-- **Regra:** informa nome, telefone, serviço, data desejada e, opcional, barbeiro preferido; **sem segunda entrada `aguardando`** do mesmo cliente para o mesmo serviço e data.
-- **Teste:** 1ª entrada gravada; 2ª igual recusada com mensagem de duplicidade.
+- **Comportamento:** incluir o cliente na fila de espera quando o horário desejado não está livre e ele opta por aguardar; status `aguardando`, com data/hora de entrada. Há **dois tipos de fila**: `fila_barbeiro` (quer aquele barbeiro naquele horário) e `fila_horario` (aceita qualquer barbeiro naquele horário).
+- **Regra:** informa nome, telefone, serviço, data desejada, **hora desejada** e, na fila do barbeiro, o barbeiro; `barbeiro_id` nulo indica a fila por horário. **Sem segunda entrada `aguardando`** do mesmo cliente para o mesmo serviço, data, hora e barbeiro (nulo conta como valor).
+- **Teste:** 1ª entrada gravada; 2ª igual recusada com mensagem de duplicidade; mesma pessoa em fila de outro horário ou de outro barbeiro é aceita.
 - **Depende de:** RF01.
 
-### RF05 (Obrigatório) — Cancelar e indicar próximo da lista
-- **Comportamento:** o barbeiro autenticado cancela um agendamento e o painel indica o próximo cliente compatível da lista de espera. O agendamento passa a `cancelado` (não é excluído); o cliente indicado passa a `chamado`.
-- **Regra:** compatível = `aguardando` para o mesmo serviço, data e, se informado, barbeiro, que caiba no horário liberado; ordem por `entrou_em`.
-- **Teste:** com 3 entradas aguardando, exibe a de menor `entrou_em` que caiba; agendamento segue no banco como `cancelado`.
+### RF05 (Obrigatório; no MVP desta entrega, só se sobrar tempo) — Cancelar e indicar próximo da fila
+- **Comportamento:** o barbeiro autenticado cancela um agendamento e o painel indica o próximo cliente compatível da fila de espera, um por vez. O agendamento passa a `cancelado` (não é excluído); o cliente indicado passa a `chamado`.
+- **Regra:** compatível = `aguardando` para o mesmo serviço e data, com `hora_desejada` igual ao início do horário liberado e serviço que caiba no bloco liberado. Chama-se **primeiro a fila do barbeiro** (barbeiro e horário liberados) e, se não houver compatível, a **fila por horário**. Dentro de cada fila, ordem por `entrou_em`.
+- **Teste:** com entradas nas duas filas, a do barbeiro vem antes da por horário; dentro da fila, a de menor `entrou_em` que caiba; sem fila do barbeiro, chama a por horário; agendamento segue no banco como `cancelado`.
 - **Depende de:** RF02, RF04, RF08.
 
 ### RF06 (Obrigatório) — Agenda do dia e da semana
@@ -66,6 +66,9 @@ Padrão: RFxx (prioridade) — comportamento, usuário, regra, evidência, depen
 
 ### Ordem recomendada
 RF08 → RF07 → RF01 → RF02 → RF03 → RF04 → RF06 → RF05 → RF09 → RF10.
+
+### Escopo do painel nesta entrega (17/11/2026)
+Entram RF08 (login), RF07 (janelas) e RF06 (agenda do dia). RF05 (cancelar e chamar o próximo) entra só se sobrar tempo; a regra de chamada da fila fica implementada e testada em `app/services`, mesmo sem a tela. RF09 e RF10 ficam de fora.
 
 ## Requisitos não funcionais
 
@@ -107,7 +110,7 @@ RF08 → RF07 → RF01 → RF02 → RF03 → RF04 → RF06 → RF05 → RF09 →
 - Se falhar, nesta ordem: gzip, reduzir/remover imagens, índices em `agendamento(barbeiro_id, inicio)` e `janela_atendimento(barbeiro_id, data)`, reduzir JS, cache de estáticos, paginar listas.
 
 ### RNF04 (Obrigatório) — Acessibilidade
-1. Toque ≥ 44×44 px em botões de serviço, barbeiro, horário, confirmar e cancelar, com 8 px de espaço.
+1. Toque ≥ 44×44 px em botões de serviço, horário, barbeiro, confirmar e cancelar, com 8 px de espaço.
 2. Contraste ≥ 4,5:1 (texto) e 3:1 (bordas/componentes).
 3. Todo campo com rótulo visível e associado; placeholder não substitui rótulo.
 4. Erros em texto junto ao campo, com problema e correção (ex.: "Telefone incompleto. Informe DDD e número, como 51 90000-0000"), ícone + texto, `aria-live`.
