@@ -60,6 +60,14 @@ Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Agenda" no painel.
 - **Regras:** só agendamentos `confirmado` (cancelados e concluídos ficam fora); semana = segunda a domingo da data escolhida; na semana, só os dias com agendamento aparecem.
 - **Permissão:** o barbeiro vê só a própria agenda (parâmetro de outro barbeiro é ignorado no servidor); o administrador escolhe o barbeiro. Só leitura (GET).
 
+## Painel — Cancelar e próximo da fila (RF05)
+Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Cancelar" em cada item da Agenda.
+- **Confirmação:** título "Cancelar agendamento"; resumo "sábado, 14/11/2026 · 10:00 – 10:30 · Corte – 30 min · Cliente Exemplo · 51 90000-0000"; botão "Confirmar cancelamento"; link "Voltar" (agenda). Página em vez de `confirm()` (a CSP bloqueia script inline e evita toque acidental).
+- **Resultado** (`/painel/cancelado`, sem parâmetros): alerta de sucesso "Agendamento cancelado."; seção "Próximo da fila" com "Cliente Exemplo · 51 90000-0000", "Corte – 30 min · sábado, 14/11/2026 às 10:00" e "Fila do Barbeiro 1" ou "Fila por horário"; texto "Chame o cliente pelo WhatsApp."; botão "Não conseguiu falar? Chamar o próximo"; sem compatível: "Ninguém na fila de espera para este horário."; botão "Voltar à agenda".
+- **Erro (na Agenda):** "Este agendamento não pode mais ser cancelado."
+- **Regras:** o agendamento passa a `cancelado` (não é apagado) e o próximo compatível a `chamado`, na mesma transação. "Chamar o próximo" marca o atual como `desistiu` e indica o seguinte, um por vez. O horário liberado não fica reservado: volta a aparecer no link público.
+- **Permissão:** o barbeiro cancela só os próprios agendamentos (de outro → 404); o administrador cancela de qualquer barbeiro. Alterações só por POST com CSRF; a sessão guarda só os ids do resultado.
+
 ## Coerência
 - Fluxo: T1 escolhe serviço, data, horário e barbeiro → T2 mostra a disponibilidade e as opções → T3 pede os dados → T4 mostra confirmação ou fila. "Voltar" mantém a escolha; "Voltar ao início" recomeça.
 - Sem contradição segurança × usabilidade: bloqueio de login vale só para o painel; o formulário público **não usa CAPTCHA**; proteção por validação no servidor, CSRF e a regra de uma entrada de fila por cliente, serviço, data, hora e barbeiro.

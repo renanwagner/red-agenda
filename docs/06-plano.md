@@ -27,6 +27,11 @@ Um único cliente-base. Plano ainda a definir na etapa "Protótipo e plano de va
 - Chamada da fila: primeiro a fila do barbeiro (mesmo serviço, data e hora, serviço cabe no bloco), depois a fila por horário; dentro de cada uma, por `entrou_em`. O painel indica um cliente por vez.
 - Limite de horários por dia: só as janelas abertas (RF07); sem campo nem teto novo.
 - Painel da entrega: RF08, RF07 e RF06. RF05 (tela) só se sobrar tempo.
+- RF05 entrou nesta entrega (08/11/2026), com "Chamar o próximo" (chamado → `desistiu`).
+
+## Evolução futura (registrada em 08/11/2026)
+- Marcar a entrada da fila como `atendido` quando o cliente chamado agenda (exige agendar pelo painel, origem `painel`, ou ligar o agendamento do link à entrada).
+- Reservar o horário liberado para o cliente chamado; hoje ele volta ao link público e outra pessoa pode agendar antes.
 
 ## Pendências e hipóteses abertas
 - Familiaridade digital do público e uso de ampliação de texto: hipóteses, confirmar na validação.
