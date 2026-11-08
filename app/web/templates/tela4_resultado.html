@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_icones.html" import icone %}
+{% block titulo %}Resultado – RED Barbearia{% endblock %}
+{% block conteudo %}
+{% set quando = data_br(sel.data) ~ " às " ~ sel.hora %}
+
+{% if estado == 'confirmado' %}
+<div class="alerta alerta--sucesso" role="status" aria-live="polite">
+  {{ icone('check') }}
+  <h1>Agendamento confirmado</h1>
+</div>
+<table class="tabela-resumo">
+  <tbody>
+    <tr><th scope="row">Serviço</th><td>{{ servico_txt(sel.servico) }}</td></tr>
+    <tr><th scope="row">Barbeiro</th><td>{{ sel.barbeiro.nome }}</td></tr>
+    <tr><th scope="row">Data</th><td>{{ data_br(sel.data) }}</td></tr>
+    <tr><th scope="row">Hora</th><td>{{ sel.hora }}</td></tr>
+  </tbody>
+</table>
+
+{% elif estado == 'fila_horario' %}
+<div class="alerta alerta--sucesso" role="status" aria-live="polite">
+  {{ icone('check') }}
+  <h1>Você está na fila de espera para {{ quando }}</h1>
+</div>
+<p class="texto">Vamos chamar você pelo WhatsApp se surgir vaga em qualquer barbeiro neste horário.</p>
+
+{% else %}
+<div class="alerta alerta--sucesso" role="status" aria-live="polite">
+  {{ icone('check') }}
+  <h1>Você está na fila do {{ sel.barbeiro.nome }} para {{ quando }}</h1>
+</div>
+<p class="texto">Vamos chamar você pelo WhatsApp se o {{ sel.barbeiro.nome }} liberar este horário.</p>
+{% endif %}
+
+<div class="acoes">
+  <a class="botao botao--principal" href="{{ url_for('web.escolha') }}">Voltar ao início</a>
+</div>
+{% endblock %}

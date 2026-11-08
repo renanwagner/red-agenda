@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titulo %}Agende seu horário – RED Barbearia{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/tela1.js') }}" defer></script>{% endblock %}
+
+{% macro opcao(campo, valor, texto, ativo) -%}
+<button type="submit" name="escolher" value="{{ campo }}:{{ valor }}"
+        class="opcao{% if ativo %} opcao--selecionada{% endif %}"
+        aria-pressed="{{ 'true' if ativo else 'false' }}">
+  {%- if ativo %}<span class="marca-sel" aria-hidden="true">✓</span>{% endif %}{{ texto }}</button>
+{%- endmacro %}
+
+{% block conteudo %}
+<h1>Agende seu horário na RED Barbearia</h1>
+<p class="subtitulo">Estância Velha, RS</p>
+
+{# Formulário único: cada escolha recarrega a página mantendo as demais (inclusive a data) #}
+<form method="get" action="{{ url_for('web.escolha') }}">
+  {# Enter no campo de data aplica a data, em vez de acionar o primeiro botão de serviço #}
+  <button type="submit" hidden tabindex="-1"></button>
+  {% if sel.servico %}<input type="hidden" name="servico" value="{{ sel.servico.id_servico }}">{% endif %}
+  {% if sel.hora %}<input type="hidden" name="hora" value="{{ sel.hora }}">{% endif %}
+  <input type="hidden" name="barbeiro" value="{{ sel.barbeiro.id_barbeiro }}">
+
+  <fieldset class="bloco">
+    <legend>Escolha o serviço</legend>
+    <div class="grade-botoes">
+      {% for s in servicos %}
+      {{ opcao('servico', s.id_servico, servico_txt(s), sel.servico and sel.servico.id_servico == s.id_servico) }}
+      {% endfor %}
+    </div>
+    {% if sel.servico %}<p class="estado-sel">Selecionado: {{ servico_txt(sel.servico) }}</p>{% endif %}
+  </fieldset>
+
+  <div class="bloco">
+    <label class="rotulo" for="data">Escolha a data</label>
+    <input class="campo campo--data" type="date" id="data" name="data"
+           value="{{ sel.data.isoformat() }}"{% if foco_data %} autofocus{% endif %}>
+    <p class="estado-sel">Selecionado: {{ data_br(sel.data) }}</p>
+  </div>
+
+  <fieldset class="bloco">
+    <legend>Escolha o horário</legend>
+    <div class="grade-botoes">
+      {% for h in horarios %}
+      {{ opcao('hora', h, h, sel.hora == h) }}
+      {% endfor %}
+    </div>
+    {% if sel.hora %}<p class="estado-sel">Selecionado: {{ sel.hora }}</p>{% endif %}
+  </fieldset>
+
+  <fieldset class="bloco">
+    <legend>Escolha o barbeiro</legend>
+    <div class="grade-botoes">
+      {% for b in barbeiros %}
+      {{ opcao('barbeiro', b.id_barbeiro, b.nome, sel.barbeiro.id_barbeiro == b.id_barbeiro) }}
+      {% endfor %}
+    </div>
+    <p class="estado-sel">Selecionado: {{ sel.barbeiro.nome }}</p>
+  </fieldset>
+
+  {% if completa %}
+  <button type="submit" formaction="{{ url_for('web.disponibilidade') }}" class="botao botao--principal">Ver disponibilidade</button>
+  {% else %}
+  <button type="submit" class="botao botao--principal" disabled aria-describedby="apoio">Ver disponibilidade</button>
+  <p id="apoio" class="apoio">Selecione serviço, data e horário para continuar</p>
+  {% endif %}
+</form>
+{% endblock %}

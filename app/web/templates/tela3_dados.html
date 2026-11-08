@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_icones.html" import icone %}
+{% block titulo %}Seus dados – RED Barbearia{% endblock %}
+{% block conteudo %}
+<h1>Seus dados</h1>
+<p class="resumo">{% if modo != 'confirmacao' %}Fila de espera · {% endif %}{{ servico_txt(sel.servico) }} · {{ sel.barbeiro.nome }} · {{ data_br(sel.data) }} às {{ sel.hora }}</p>
+
+{# Foco vai ao primeiro campo com erro, na ordem visual #}
+{% set erro_nome = form.nome.errors|length > 0 %}
+{% set erro_tel = form.telefone.errors|length > 0 and not erro_nome %}
+
+<form class="bloco" method="post" action="{{ acao }}" novalidate>
+  {{ form.csrf_token }}
+
+  <div class="grupo-campo">
+    {{ form.nome.label(class_="rotulo") }}
+    {% if form.nome.errors %}
+    {{ form.nome(class_="campo campo--erro", autocomplete="name", maxlength="100", placeholder=exemplo.nome,
+                 autofocus=erro_nome, **{"aria-invalid": "true", "aria-describedby": "nome-erro"}) }}
+    {% else %}
+    {{ form.nome(class_="campo", autocomplete="name", maxlength="100", placeholder=exemplo.nome) }}
+    {% endif %}
+    <div aria-live="assertive">
+      {% if form.nome.errors %}
+      <p class="erro" id="nome-erro">{{ icone('erro') }}<span>{{ form.nome.errors[0] }}</span></p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grupo-campo">
+    {{ form.telefone.label(class_="rotulo") }}
+    {% if form.telefone.errors %}
+    {{ form.telefone(class_="campo campo--erro", type="tel", inputmode="tel", autocomplete="tel-national",
+                     placeholder=exemplo.telefone, autofocus=erro_tel,
+                     **{"aria-invalid": "true", "aria-describedby": "telefone-erro"}) }}
+    {% else %}
+    {{ form.telefone(class_="campo", type="tel", inputmode="tel", autocomplete="tel-national",
+                     placeholder=exemplo.telefone) }}
+    {% endif %}
+    <div aria-live="assertive">
+      {% if form.telefone.errors %}
+      <p class="erro" id="telefone-erro">{{ icone('erro') }}<span>{{ form.telefone.errors[0] }}</span></p>
+      {% endif %}
+    </div>
+  </div>
+
+  <button type="submit" class="botao botao--principal">
+    {%- if modo == 'confirmacao' %}Confirmar agendamento{% else %}Entrar na fila de espera{% endif -%}
+  </button>
+</form>
+
+<p class="voltar"><a class="link" href="{{ url_for('web.disponibilidade', **params) }}">Voltar</a></p>
+{% endblock %}

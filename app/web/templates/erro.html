@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_icones.html" import icone %}
+{% block titulo %}Erro – RED Barbearia{% endblock %}
+{% block conteudo %}
+<div class="alerta alerta--info" role="alert">
+  {{ icone('erro') }}
+  <h1>{{ mensagem }}</h1>
+</div>
+<a class="botao botao--principal" href="{{ url_for('web.escolha') }}">Voltar ao início</a>
+{% endblock %}

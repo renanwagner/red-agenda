@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_icones.html" import icone %}
+{% block titulo %}Disponibilidade – RED Barbearia{% endblock %}
+{% block conteudo %}
+{% set hora = sel.hora %}
+<p class="resumo">{{ servico_txt(sel.servico) }} · {{ data_br(sel.data) }} às {{ hora }}</p>
+
+{% if caso == 'a' %}
+<div class="alerta alerta--sucesso" role="status" aria-live="polite">
+  {{ icone('check') }}
+  <h1>{{ sel.barbeiro.nome }} está livre às {{ hora }}</h1>
+</div>
+<div class="acoes">
+  <a class="botao botao--principal" href="{{ url_for('web.dados', modo='confirmacao', **params) }}">Continuar com {{ sel.barbeiro.nome }}</a>
+</div>
+
+{% elif caso == 'b' %}
+<div class="alerta alerta--atencao" role="status" aria-live="polite">
+  {{ icone('triangulo') }}
+  <h1>{{ sel.barbeiro.nome }} não está livre às {{ hora }}</h1>
+</div>
+<div class="acoes">
+  <a class="botao botao--principal" href="{{ url_for('web.dados', modo='fila_barbeiro', **params) }}">Entrar na fila para o {{ sel.barbeiro.nome }} às {{ hora }}</a>
+  {% if outros %}
+  <details class="outros">
+    <summary class="botao botao--secundario">Ver outros barbeiros livres às {{ hora }}</summary>
+    <ul class="grade-botoes lista-limpa">
+      {% for b in outros %}
+      <li><a class="opcao" href="{{ url_for('web.dados', modo='confirmacao', **dict(params, barbeiro=b.id_barbeiro)) }}">{{ b.nome }} – {{ hora }}</a></li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</div>
+
+{% elif caso == 'c' %}
+<h1>Escolha o barbeiro</h1>
+<ul class="grade-botoes lista-limpa bloco">
+  {% for b in outros %}
+  <li><a class="opcao" href="{{ url_for('web.dados', modo='confirmacao', **dict(params, barbeiro=b.id_barbeiro)) }}">{{ b.nome }} – {{ hora }}</a></li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<div class="alerta alerta--info" role="status" aria-live="polite">
+  {{ icone('info') }}
+  <h1>Nenhum barbeiro está livre às {{ hora }}</h1>
+</div>
+<div class="acoes">
+  <a class="botao botao--principal" href="{{ url_for('web.dados', modo='fila_horario', **params) }}">Entrar na fila para {{ hora }}</a>
+</div>
+{% endif %}
+
+<p class="voltar"><a class="link" href="{{ url_for('web.escolha', **params) }}">Voltar</a></p>
+{% endblock %}

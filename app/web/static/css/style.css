@@ -1,0 +1,287 @@
+/* RED Agenda — protótipo do fluxo do cliente. Mobile-first (360 px), sem framework. */
+
+/* Cores (contraste conferido pela fórmula WCAG; razão sobre o fundo indicado) */
+:root {
+  --cor-fundo: #ffffff;
+  --cor-superficie: #f6f4f2;
+  --cor-texto: #1b1b1b;            /* 17,2:1 no branco */
+  --cor-texto-suave: #4d4d4d;      /* 8,4:1 no branco */
+  --cor-primaria: #a3001a;         /* texto branco sobre ela: 8,2:1 */
+  --cor-primaria-escura: #7d0014;  /* 11,2:1 */
+  --cor-sobre-primaria: #ffffff;
+  --cor-borda: #707070;            /* 4,9:1 no branco (componentes ≥ 3:1) */
+  --cor-foco: #0b57d0;             /* 6,4:1 no branco */
+  --cor-selecionado-fundo: #fbe9eb;/* texto 14,7:1; borda vermelha 7,0:1 */
+  --cor-desabilitado-fundo: #e6e6e6;/* texto suave 6,8:1 */
+  --cor-sucesso: #1d5e2f;
+  --cor-sucesso-fundo: #e7f4ea;    /* 6,9:1 */
+  --cor-atencao: #7a4100;
+  --cor-atencao-fundo: #fff1db;    /* 7,3:1 */
+  --cor-info: #1f3f7a;
+  --cor-info-fundo: #e9effa;       /* 8,9:1 */
+  --cor-erro: #a3001a;
+  --cor-erro-fundo: #fdecee;       /* 7,2:1 */
+  --cor-cabecalho: #1b1b1b;
+  --cor-sobre-cabecalho: #ffffff;  /* 17,2:1 */
+
+  --toque: 2.75rem;   /* 44 px */
+  --espaco: 0.5rem;   /* 8 px entre botões */
+  --raio: 0.5rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Foco visível em tudo que é interativo (≥ 2 px) */
+:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+}
+main:focus { outline: none; }
+
+/* Link de pular conteúdo (aparece só com foco) */
+.pular {
+  position: absolute;
+  left: -9999px;
+}
+.pular:focus {
+  left: 1rem;
+  top: 0.5rem;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+/* Cabeçalho */
+.cabecalho {
+  background: #000000; /* mesmo fundo do logo */
+  padding: 0 1rem;
+}
+.marca {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--toque);
+  min-width: var(--toque);
+  padding: 0.25rem 0;
+}
+.marca img { display: block; height: 2.5rem; width: auto; } /* ~40 px */
+.cabecalho :focus-visible { outline-color: var(--cor-sobre-cabecalho); }
+
+/* Área principal */
+.principal {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 { font-size: 1.5rem; line-height: 1.25; margin: 0.5rem 0; }
+h2 { font-size: 1.125rem; margin: 0 0 0.5rem; }
+.subtitulo { margin: 0 0 1rem; color: var(--cor-texto-suave); }
+
+.bloco { margin: 0 0 1.5rem; }
+
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend, .rotulo {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.lista-limpa { list-style: none; margin: 0; padding: 0; }
+
+/* Grade de botões: 8 px de espaço, quebra de linha, sem rolagem horizontal */
+.grade-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco);
+}
+.grade-botoes > li { display: flex; }
+
+/* Botões de opção (serviço, barbeiro, horário, sugestão) */
+.opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--toque);
+  min-width: var(--toque);
+  padding: 0.5rem 0.875rem;
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.opcao:hover { border-color: var(--cor-texto); }
+/* Selecionado: borda de 3 px + fundo + texto "Selecionado"/✓ (nunca só cor) */
+.opcao--selecionada {
+  border: 3px solid var(--cor-primaria);
+  background: var(--cor-selecionado-fundo);
+  font-weight: 700;
+  padding: calc(0.5rem - 1px) calc(0.875rem - 1px);
+}
+.marca-sel { color: var(--cor-primaria); font-weight: 700; }
+.horario { font-variant-numeric: tabular-nums; }
+
+.estado-sel {
+  margin: 0.5rem 0 0;
+  font-weight: 700;
+}
+
+/* Botões de ação */
+.botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--toque);
+  min-width: var(--toque);
+  padding: 0.625rem 1rem;
+  border: 2px solid transparent;
+  border-radius: var(--raio);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.botao--principal {
+  background: var(--cor-primaria);
+  color: var(--cor-sobre-primaria);
+}
+.botao--principal:hover { background: var(--cor-primaria-escura); }
+.botao--secundario {
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  border-color: var(--cor-borda);
+}
+.botao--secundario:hover { border-color: var(--cor-texto); }
+.botao--compacto { width: auto; }
+.botao:disabled,
+.botao:disabled:hover {
+  background: var(--cor-desabilitado-fundo);
+  color: var(--cor-texto-suave);
+  border: 2px dashed var(--cor-borda);
+  cursor: not-allowed;
+}
+
+.apoio { margin: 0.5rem 0 0; color: var(--cor-texto-suave); }
+
+/* Campos */
+.grupo-campo { margin-bottom: 1rem; }
+.campo {
+  display: block;
+  width: 100%;
+  min-height: var(--toque);
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font: inherit;
+}
+.campo--erro { border-color: var(--cor-erro); border-width: 3px; }
+
+
+/* Mensagem de erro: ícone + texto + correção */
+.erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--cor-erro);
+  border-radius: var(--raio);
+  background: var(--cor-erro-fundo);
+  color: var(--cor-erro);
+  font-weight: 700;
+}
+.erro:focus { outline: 3px solid var(--cor-foco); outline-offset: 2px; }
+
+.icone { flex: none; width: 1.5rem; height: 1.5rem; }
+
+/* Resumo da escolha (Tela 2) */
+.resumo {
+  margin: 0 0 1.5rem;
+  font-weight: 700;
+  padding: 0.75rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.voltar { margin: 1rem 0; }
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--toque);
+  min-width: var(--toque);
+  color: var(--cor-primaria);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Alertas da Tela 3: ícone + título (h1) + cor de reforço */
+.alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.5rem;
+  padding: 1rem;
+  border: 2px solid currentColor;
+  border-radius: var(--raio);
+}
+.alerta h1 { margin: 0; font-size: 1.375rem; }
+.alerta .icone { width: 2rem; height: 2rem; }
+.alerta--sucesso { background: var(--cor-sucesso-fundo); color: var(--cor-sucesso); }
+.alerta--atencao { background: var(--cor-atencao-fundo); color: var(--cor-atencao); }
+.alerta--info    { background: var(--cor-info-fundo);    color: var(--cor-info); }
+
+/* Tabela de resumo (Tela 4) */
+.tabela-resumo { width: 100%; border-collapse: collapse; margin: 0 0 1.5rem; }
+.tabela-resumo th,
+.tabela-resumo td {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--cor-borda);
+  text-align: left;
+  vertical-align: top;
+}
+.tabela-resumo th { width: 6.5rem; padding-right: 0.5rem; }
+
+.texto { margin: 0 0 1.5rem; }
+
+/* Pilha de ações: 8 px entre botões e entre opções e o botão principal */
+.acoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco);
+  margin: 0 0 1rem;
+}
+.grade-botoes + .botao,
+.bloco + .botao { margin-top: var(--espaco); }
+
+/* "Ver outros barbeiros livres" sem JS (details/summary) */
+.outros > summary { list-style: none; }
+.outros > summary::-webkit-details-marker { display: none; }
+.outros > summary::before { content: "▸"; margin-right: 0.5rem; }
+.outros[open] > summary::before { content: "▾"; }
+.outros > .grade-botoes { margin-top: var(--espaco); }
+
+.campo::placeholder { color: #6b6b6b; opacity: 1; } /* 5,3:1 no branco */
+.campo--data { max-width: 14rem; }
