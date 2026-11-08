@@ -7,6 +7,8 @@ Rótulos consistentes em todas as telas: "Serviço", "Barbeiro", "Data", "Horár
 ## Tela 1 — Escolha: serviço, data, horário e barbeiro
 - **Requisitos:** RF01, RNF02, RNF03, RNF04.
 - **Componentes:** título "Agende seu horário na RED Barbearia"; subtítulo "Estância Velha, RS"; logo no cabeçalho; "Escolha o serviço" com 7 botões (ex.: "Corte – 30 min", "Corte + barba – 45 min", "Barba – 15 min"); "Escolha a data" (padrão 14/11/2026, aplicada ao escolher, sem botão); "Escolha o horário" (09:30, 10:00, 10:30, 11:00); "Escolha o barbeiro" com "Qualquer barbeiro" como padrão e os 3 barbeiros; botão principal "Ver disponibilidade"; texto de apoio "Selecione serviço, data e horário para continuar" enquanto desabilitado.
+- **Horário só com fila (rodada 1 de validação, 08/11/2026):** com o serviço escolhido, o horário em que nenhum barbeiro ativo está livre aparece como "11:00 – só fila de espera" e continua escolhível (leva ao caso d da Tela 2). Barbeiro escolhido ocupado com outro livre não recebe o aviso (a Tela 2 sugere os outros, RF03).
+- **Sem voltar ao topo (rodada 1 de validação):** cada escolha recarrega a página já na seção seguinte (serviço → horário → barbeiro → "Ver disponibilidade"), por âncora no endereço, sem JavaScript.
 - **Ação e navegação:** "Ver disponibilidade" com serviço, data e horário escolhidos → Tela 2. Botão desabilitado enquanto incompleto. Entrada: link público (WhatsApp ou navegador). Sem login nem cadastro.
 - **Acessibilidade:** botões ≥ 44×44 px com 8 px de espaço; rótulos visíveis; contraste 4,5:1/3:1; foco com contorno de 3 px; seleção em texto ("Selecionado: …" e ✓), não só cor; sem rolagem horizontal em 360 px.
 - **Dados fictícios:** sete serviços com as durações do modelo; "Barbeiro 1/2/3"; sábado 14/11/2026.
