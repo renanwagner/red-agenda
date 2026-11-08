@@ -2,11 +2,13 @@
 import re
 
 from flask_wtf import FlaskForm
-from wtforms import StringField
+from wtforms import PasswordField, StringField
 from wtforms.validators import DataRequired, Length, ValidationError
 
 MSG_TELEFONE = "Telefone incompleto. Informe DDD e número, como 51 90000-0000"
 MSG_NOME = "Informe seu nome."
+MSG_EMAIL = "Informe o e-mail."
+MSG_SENHA = "Informe a senha."
 
 
 def _limpar(valor):
@@ -36,3 +38,11 @@ class DadosForm(FlaskForm):
         filters=[_limpar],
         validators=[DataRequired(message=MSG_TELEFONE), validar_telefone],
     )
+
+
+class EntrarForm(FlaskForm):
+    """Login do painel (RF08). Só confere preenchimento; a verificação é na camada de regras."""
+
+    email = StringField("E-mail", filters=[_limpar],
+                        validators=[DataRequired(message=MSG_EMAIL), Length(max=120, message=MSG_EMAIL)])
+    senha = PasswordField("Senha", validators=[DataRequired(message=MSG_SENHA)])

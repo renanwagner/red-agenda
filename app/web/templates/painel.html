@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Painel – RED Barbearia{% endblock %}
+{% block conteudo %}
+<h1>Painel – {{ current_user.nome }}</h1>
+
+<form class="acoes" method="post" action="{{ url_for('painel.sair') }}">
+  <input name="csrf_token" type="hidden" value="{{ csrf_token() }}">
+  <button type="submit" class="botao botao--secundario">Sair</button>
+</form>
+{% endblock %}

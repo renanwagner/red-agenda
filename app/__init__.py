@@ -31,9 +31,11 @@ def create_app(config=None):
     csrf.init_app(app)
     db.init_app(app)
 
+    from app.web import painel
     from app.web.rotas import bp
 
     app.register_blueprint(bp)
+    painel.iniciar(app)
 
     @app.after_request
     def cabecalhos_seguranca(resposta):

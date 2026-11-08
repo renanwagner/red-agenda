@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_icones.html" import icone %}
+{% block titulo %}Entrar no painel – RED Barbearia{% endblock %}
+
+{% macro campo(f, id_erro, tipo, autocomplete, foco) -%}
+<div class="grupo-campo">
+  {{ f.label(class_="rotulo") }}
+  {% if f.errors %}
+  {{ f(class_="campo campo--erro", type=tipo, autocomplete=autocomplete, autofocus=foco,
+       **{"aria-invalid": "true", "aria-describedby": id_erro}) }}
+  {% else %}
+  {{ f(class_="campo", type=tipo, autocomplete=autocomplete) }}
+  {% endif %}
+  <div aria-live="assertive">
+    {% if f.errors %}<p class="erro" id="{{ id_erro }}">{{ icone('erro') }}<span>{{ f.errors[0] }}</span></p>{% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{% block conteudo %}
+<h1>Entrar no painel</h1>
+<p class="subtitulo">RED Barbearia – área do barbeiro</p>
+
+<form class="bloco" method="post" action="{{ url_for('painel.entrar') }}" novalidate>
+  {{ form.csrf_token }}
+  <div aria-live="assertive">
+    {% if erro %}<p class="erro" id="entrar-erro">{{ icone('erro') }}<span>{{ erro }}</span></p>{% endif %}
+  </div>
+  {{ campo(form.email, "email-erro", "email", "username", form.email.errors|length > 0) }}
+  {{ campo(form.senha, "senha-erro", "password", "current-password",
+           form.senha.errors|length > 0 and not form.email.errors) }}
+  <button type="submit" class="botao botao--principal">Entrar</button>
+</form>
+{% endblock %}
