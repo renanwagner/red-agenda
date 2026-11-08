@@ -52,6 +52,14 @@ Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Janelas de atendime
 - **Regras:** além do RF07, nenhuma criação ou alteração (inclusive de bloqueio) pode deixar um agendamento confirmado fora de janela aberta ou dentro de bloqueio.
 - **Permissão:** o barbeiro vê e altera só as próprias janelas (de outro → 404); o administrador escolhe o barbeiro. Excluir só por POST com CSRF.
 
+## Painel — Agenda (RF06)
+Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Agenda" no painel.
+- **Componentes:** título "Agenda"; campo "Data"; só para administrador, campo "Barbeiro"; botões "Ver dia" e "Ver semana"; link "Voltar" para o painel.
+- **Lista:** agrupada por dia com título no formato "sábado, 14/11/2026"; cada item em duas linhas: "09:30 – 10:15 · Corte + barba – 45 min" e "Cliente Exemplo · 51 90000-0000". Ordem por horário.
+- **Vazio:** "Nenhum agendamento confirmado nesta data." / "Nenhum agendamento confirmado nesta semana."
+- **Regras:** só agendamentos `confirmado` (cancelados e concluídos ficam fora); semana = segunda a domingo da data escolhida; na semana, só os dias com agendamento aparecem.
+- **Permissão:** o barbeiro vê só a própria agenda (parâmetro de outro barbeiro é ignorado no servidor); o administrador escolhe o barbeiro. Só leitura (GET).
+
 ## Coerência
 - Fluxo: T1 escolhe serviço, data, horário e barbeiro → T2 mostra a disponibilidade e as opções → T3 pede os dados → T4 mostra confirmação ou fila. "Voltar" mantém a escolha; "Voltar ao início" recomeça.
 - Sem contradição segurança × usabilidade: bloqueio de login vale só para o painel; o formulário público **não usa CAPTCHA**; proteção por validação no servidor, CSRF e a regra de uma entrada de fila por cliente, serviço, data, hora e barbeiro.
