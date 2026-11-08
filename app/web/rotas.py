@@ -6,6 +6,7 @@ from datetime import date
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
+from app.services import disponibilidade as regras
 from app.web import dados_demo as demo
 from app.web.formularios import DadosForm
 
@@ -85,20 +86,12 @@ def _completa(sel):
 
 def _livres(hora):
     """Barbeiros livres no horário, segundo os dados de demonstração."""
-    return [_barbeiro(i) for i in demo.DISPONIBILIDADE.get(hora, ())]
+    return [_barbeiro(i) for i in regras.ids_livres(demo.DISPONIBILIDADE, hora)]
 
 
 def _modo_coerente(sel, modo):
-    # Protótipo: confere o modo contra a disponibilidade demo (vai para services/ depois)
-    livres_ids = demo.DISPONIBILIDADE[sel["hora"]]
-    especifico = sel["barbeiro"]["id_barbeiro"] != demo.QUALQUER
-    if modo == "confirmacao":
-        return especifico and sel["barbeiro"]["id_barbeiro"] in livres_ids
-    if modo == "fila_barbeiro":
-        return especifico and sel["barbeiro"]["id_barbeiro"] not in livres_ids
-    if modo == "fila_horario":
-        return not especifico and not livres_ids
-    return False
+    livres_ids = regras.ids_livres(demo.DISPONIBILIDADE, sel["hora"])
+    return regras.modo_coerente(modo, sel["barbeiro"]["id_barbeiro"], livres_ids, demo.QUALQUER)
 
 
 @bp.app_context_processor
@@ -140,10 +133,9 @@ def disponibilidade():
         return redirect(url_for("web.escolha", **_params(sel)))
     livres = _livres(sel["hora"])
     barbeiro = sel["barbeiro"]
-    if barbeiro["id_barbeiro"] == demo.QUALQUER:
-        caso = "c" if livres else "d"
-    else:
-        caso = "a" if barbeiro in livres else "b"
+    caso = regras.caso_disponibilidade(
+        barbeiro["id_barbeiro"], [b["id_barbeiro"] for b in livres], demo.QUALQUER
+    )
     outros = [b for b in livres if b != barbeiro]
     return render_template(
         "tela2_disponibilidade.html",
@@ -207,7 +199,6 @@ def resultado(estado):
     sel = _selecao(request.args)
     if not _completa(sel):
         return redirect(url_for("web.escolha"))
-    qualquer = sel["barbeiro"]["id_barbeiro"] == demo.QUALQUER
-    if qualquer != (estado == "fila_horario"):
+    if not regras.estado_coerente(estado, sel["barbeiro"]["id_barbeiro"], demo.QUALQUER):
         return redirect(url_for("web.escolha"))
     return render_template("tela4_resultado.html", estado=estado, sel=sel)
