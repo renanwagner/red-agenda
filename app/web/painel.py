@@ -1,11 +1,12 @@
 """Painel do barbeiro: entrar, sair e página inicial (RF08, RNF01)."""
+from datetime import date, time
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, redirect, render_template, session, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 
-from app.services import autenticacao
-from app.web.formularios import EntrarForm
+from app.services import autenticacao, catalogo, janelas
+from app.web.formularios import EntrarForm, JanelaForm
 
 bp = Blueprint("painel", __name__, url_prefix="/painel")
 login_manager = LoginManager()
@@ -77,3 +78,112 @@ def sair():
 @login_required
 def inicio():
     return render_template("painel.html")
+
+
+# ---------- RF07: janelas de atendimento ----------
+
+TIPOS_TEXTO = {"aberto": "Aberta", "bloqueado": "Bloqueada"}
+MSG_JANELA = {
+    "fim_antes": "O fim precisa ser depois do início.",
+    "sobreposta": "Já existe uma janela deste tipo nesse período.",
+    "agendamento_fora": "Não é possível salvar: um agendamento confirmado ficaria fora do horário de atendimento.",
+}
+MSG_EXCLUIR_COM_AGENDAMENTO = "Não é possível excluir: há agendamento confirmado nesta janela."
+
+
+def _data_param():
+    try:
+        return date.fromisoformat(request.args.get("data", ""))
+    except ValueError:
+        return date.today()
+
+
+def _barbeiro_alvo():
+    """Barbeiro comum: sempre ele mesmo (parâmetro ignorado). Administrador: o escolhido, se ativo."""
+    if not current_user.administrador:
+        return current_user.id, []
+    ativos = catalogo.barbeiros_ativos()
+    try:
+        escolhido = int(request.args.get("barbeiro", ""))
+    except ValueError:
+        escolhido = current_user.id
+    if escolhido not in {b["id_barbeiro"] for b in ativos}:
+        escolhido = current_user.id
+    return escolhido, ativos
+
+
+def _url_lista(data, id_barbeiro):
+    extra = {"barbeiro": id_barbeiro} if current_user.administrador else {}
+    return url_for("painel.janelas_lista", data=data.isoformat(), **extra)
+
+
+def _tipo_ou_400(form):
+    if form.tipo.data not in TIPOS_TEXTO:
+        abort(400)
+    return form.tipo.data
+
+
+@bp.route("/janelas", methods=["GET", "POST"])
+@login_required
+def janelas_lista():
+    data = _data_param()
+    id_barbeiro, ativos = _barbeiro_alvo()
+    form = JanelaForm()
+    erro = None
+    if request.method == "POST" and form.validate_on_submit():
+        tipo = _tipo_ou_400(form)
+        r = janelas.salvar(id_barbeiro, data, time.fromisoformat(form.inicio.data),
+                           time.fromisoformat(form.fim.data), tipo)
+        if r.ok:
+            flash("Janela salva.", "sucesso")
+            return redirect(_url_lista(data, id_barbeiro))
+        erro = MSG_JANELA[r.erro]
+    elif request.method == "POST" and form.tipo.data not in TIPOS_TEXTO:
+        abort(400)
+    return render_template(
+        "painel_janelas.html", form=form, erro=erro, data=data, id_barbeiro=id_barbeiro, ativos=ativos,
+        lista=janelas.listar(id_barbeiro, data), tipos=TIPOS_TEXTO,
+        acao=_url_lista(data, id_barbeiro),
+    )
+
+
+def _janela_permitida(id_janela):
+    """Janela que o usuário pode mexer (administrador: qualquer); senão 404."""
+    j = janelas.obter(None if current_user.administrador else current_user.id, id_janela)
+    if j is None:
+        abort(404)
+    return j
+
+
+@bp.route("/janelas/<int:id_janela>/alterar", methods=["GET", "POST"])
+@login_required
+def janelas_alterar(id_janela):
+    j = _janela_permitida(id_janela)
+    form = JanelaForm(data={"inicio": j["hora_inicio"].strftime("%H:%M"),
+                            "fim": j["hora_fim"].strftime("%H:%M"), "tipo": j["tipo"]})
+    erro = None
+    if form.validate_on_submit():
+        tipo = _tipo_ou_400(form)
+        r = janelas.salvar(None if current_user.administrador else current_user.id, j["data"],
+                           time.fromisoformat(form.inicio.data), time.fromisoformat(form.fim.data),
+                           tipo, id_janela=id_janela)
+        if r.ok:
+            flash("Janela salva.", "sucesso")
+            return redirect(_url_lista(j["data"], j["barbeiro_id"]))
+        erro = MSG_JANELA[r.erro]
+    elif request.method == "POST" and form.tipo.data not in TIPOS_TEXTO:
+        abort(400)
+    return render_template("painel_janela_alterar.html", form=form, erro=erro, janela=j,
+                           voltar=_url_lista(j["data"], j["barbeiro_id"]))
+
+
+@bp.post("/janelas/<int:id_janela>/excluir")
+@login_required
+def janelas_excluir(id_janela):
+    j = _janela_permitida(id_janela)
+    r = janelas.excluir(None if current_user.administrador else current_user.id, id_janela)
+    if r.ok:
+        flash("Janela excluída.", "sucesso")
+    else:
+        flash(MSG_EXCLUIR_COM_AGENDAMENTO, "erro")
+    return redirect(_url_lista(j["data"], j["barbeiro_id"]))

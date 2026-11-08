@@ -285,3 +285,21 @@ legend, .rotulo {
 
 .campo::placeholder { color: #6b6b6b; opacity: 1; } /* 5,3:1 no branco */
 .campo--data { max-width: 14rem; }
+
+/* ---------- Painel: janelas de atendimento (RF07) ---------- */
+.campo--hora { max-width: 10rem; }
+.opcao--radio { gap: var(--espaco); cursor: pointer; }
+.opcao--radio input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--cor-primaria); }
+.lista-janelas { margin-bottom: 1.5rem; }
+.janela {
+  display: flex;
+  flex-wrap: wrap;            /* em 360 px as ações descem para a linha de baixo, sem rolagem horizontal */
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco);
+  padding: var(--espaco) 0;
+  border-bottom: 1px solid #767676;   /* 4,5:1 no branco */
+}
+.janela__acoes { display: flex; gap: var(--espaco); }
+.janela__acoes form { margin: 0; }
+p.alerta { align-items: center; }

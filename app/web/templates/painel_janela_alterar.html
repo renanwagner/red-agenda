@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_janela.html" import avisos, campos %}
+{% block titulo %}Alterar janela – RED Barbearia{% endblock %}
+{% block conteudo %}
+<h1>Alterar janela</h1>
+<p class="resumo">{{ data_br(janela.data) }}</p>
+
+{{ avisos(erro) }}
+
+<form class="bloco" method="post" action="{{ url_for('painel.janelas_alterar', id_janela=janela.id_janela) }}" novalidate>
+  {{ campos(form) }}
+</form>
+
+<p class="voltar"><a class="link" href="{{ voltar }}">Cancelar</a></p>
+{% endblock %}

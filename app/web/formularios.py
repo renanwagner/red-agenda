@@ -1,5 +1,6 @@
 """Formulários com validação no servidor e CSRF (RNF02)."""
 import re
+from datetime import time
 
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField
@@ -38,6 +39,31 @@ class DadosForm(FlaskForm):
         filters=[_limpar],
         validators=[DataRequired(message=MSG_TELEFONE), validar_telefone],
     )
+
+
+MSG_INICIO = "Informe o início."
+MSG_FIM = "Informe o fim."
+
+
+def _hora_valida(mensagem):
+    def validar(_form, campo):
+        if not re.fullmatch(r"\d{2}:\d{2}", campo.data or ""):
+            raise ValidationError(mensagem)
+        try:
+            time.fromisoformat(campo.data)
+        except ValueError:
+            raise ValidationError(mensagem) from None
+    return validar
+
+
+class JanelaForm(FlaskForm):
+    """RF07. Hora como texto HH:MM (campo type=time); fim > início é regra da camada de serviços."""
+
+    inicio = StringField("Início", filters=[_limpar],
+                         validators=[DataRequired(message=MSG_INICIO), _hora_valida(MSG_INICIO)])
+    fim = StringField("Fim", filters=[_limpar], validators=[DataRequired(message=MSG_FIM), _hora_valida(MSG_FIM)])
+    # Botões de opção desenhados no template; valor fora de "aberto"/"bloqueado" vira 400 na rota
+    tipo = StringField("Tipo", default="aberto")
 
 
 class EntrarForm(FlaskForm):
