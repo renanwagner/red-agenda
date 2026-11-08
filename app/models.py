@@ -12,12 +12,22 @@ db = SQLAlchemy()
 
 
 @event.listens_for(Engine, "connect")
-def _ativa_chaves_estrangeiras_no_sqlite(conexao, _registro):
+def _configura_sqlite(conexao, _registro):
     # O SQLite ignora chaves estrangeiras por padrão; o PostgreSQL já as aplica
     if conexao.__class__.__module__.startswith("sqlite3"):
         cursor = conexao.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
+        conexao.isolation_level = None  # o BEGIN passa a ser emitido por _inicia_transacao
+
+
+@event.listens_for(Engine, "begin")
+def _inicia_transacao(conexao):
+    # SQLite: trava de escrita desde o início da transação, para que a revalidação de
+    # sobreposição (RF02) não leia dados que outra gravação simultânea está mudando.
+    # No PostgreSQL a trava é o SELECT ... FOR UPDATE do barbeiro (repositories/agendamentos.py).
+    if conexao.dialect.name == "sqlite":
+        conexao.exec_driver_sql("BEGIN IMMEDIATE")
 
 
 class Barbeiro(db.Model):

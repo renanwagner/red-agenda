@@ -7,7 +7,7 @@ from datetime import date, time
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
-from app.services import catalogo
+from app.services import agendamento, catalogo
 from app.services import consulta_disponibilidade as consulta
 from app.services import disponibilidade as regras
 from app.web import dados_demo as demo
@@ -183,7 +183,15 @@ def enviar_dados():
         return desvio
     form = DadosForm()
     if form.validate_on_submit():
-        # Ainda não grava (etapa 3). Nome e telefone não vão para a URL.
+        if modo == "confirmacao":
+            r = agendamento.confirmar_agendamento(
+                sel["servico"]["id_servico"], sel["barbeiro"]["id_barbeiro"], sel["data"],
+                time.fromisoformat(sel["hora"]), form.nome.data, form.telefone.data,
+            )
+            if not r.confirmado:
+                # Horário tomado entre a Tela 2 e o envio: volta à Tela 2, que mostra as alternativas
+                return redirect(url_for("web.disponibilidade", **_params(sel)))
+        # Filas ainda não gravam (etapa 4). Nome e telefone não vão para a URL.
         return redirect(url_for("web.resultado", estado=ESTADO_DO_MODO[modo], **_params(sel)))
     return _render_tela3(sel, modo, form)
 

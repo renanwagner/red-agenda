@@ -13,12 +13,15 @@ def duracao_servico_ativo(id_servico):
     )
 
 
-def agendas_do_dia(data):
+def agendas_do_dia(data, id_barbeiro=None):
     """{id_barbeiro: {"abertas", "bloqueadas", "ocupados"}} com intervalos (início, fim) em datetime.
 
-    Só barbeiros ativos; só agendamentos confirmados que começam no dia.
+    Só barbeiros ativos (ou só `id_barbeiro`, se informado); só agendamentos confirmados que começam no dia.
     """
-    ids = db.session.scalars(select(Barbeiro.id_barbeiro).where(Barbeiro.ativo.is_(True)))
+    consulta = select(Barbeiro.id_barbeiro).where(Barbeiro.ativo.is_(True))
+    if id_barbeiro is not None:
+        consulta = consulta.where(Barbeiro.id_barbeiro == id_barbeiro)
+    ids = db.session.scalars(consulta)
     agendas = {i: {"abertas": [], "bloqueadas": [], "ocupados": []} for i in ids}
     if not agendas:
         return agendas
