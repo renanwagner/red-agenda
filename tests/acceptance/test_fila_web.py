@@ -26,13 +26,13 @@ def _entradas(app):
 
 def test_fila_do_barbeiro_grava_e_mostra_resultado(app, client):
     resp = _post(client, FILA_BARBEIRO)
-    assert resp.status_code == 302 and resp.headers["Location"].startswith("/resultado/fila_barbeiro")
+    assert resp.status_code == 302 and resp.headers["Location"] == "/resultado"
     assert _entradas(app) == [(1, time(10), "aguardando")]
 
 
 def test_fila_por_horario_grava_barbeiro_nulo(app, client):
     resp = _post(client, FILA_HORARIO)
-    assert resp.status_code == 302 and resp.headers["Location"].startswith("/resultado/fila_horario")
+    assert resp.status_code == 302 and resp.headers["Location"] == "/resultado"
     assert _entradas(app) == [(None, time(11), "aguardando")]
 
 

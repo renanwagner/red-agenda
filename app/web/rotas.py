@@ -5,18 +5,19 @@ Serviços, barbeiros, horários e disponibilidade vêm da camada de regras (que 
 """
 from datetime import date, time
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, session, url_for
 
 from app.services import agendamento, catalogo, fila
 from app.services import consulta_disponibilidade as consulta
 from app.services import disponibilidade as regras
+from app.services import resultado as resultado_servico
 from app.web import dados_demo as demo
 from app.web.formularios import DadosForm
 
 bp = Blueprint("web", __name__)
 
 MODOS = ("confirmacao", "fila_horario", "fila_barbeiro")
-ESTADO_DO_MODO = {"confirmacao": "confirmado", "fila_horario": "fila_horario", "fila_barbeiro": "fila_barbeiro"}
+CHAVE_RESULTADO = "resultado"  # na sessão: {"tipo", "id", "duplicada"} do último envio
 OPCAO_QUALQUER = {"id_barbeiro": demo.QUALQUER, "nome": demo.NOME_QUALQUER}
 
 
@@ -191,29 +192,34 @@ def enviar_dados():
             if not r.confirmado:
                 # Horário tomado entre a Tela 2 e o envio: volta à Tela 2, que mostra as alternativas
                 return redirect(url_for("web.disponibilidade", **_params(sel)))
+            gravado = {"tipo": "agendamento", "id": r.id_agendamento, "duplicada": False}
         else:
             id_barbeiro = sel["barbeiro"]["id_barbeiro"] if modo == "fila_barbeiro" else None
             r = fila.entrar_na_fila(
                 sel["servico"]["id_servico"], id_barbeiro, sel["data"],
                 time.fromisoformat(sel["hora"]), form.nome.data, form.telefone.data,
             )
-            if not (r.entrou or r.duplicada):
+            if r.id_espera is None:
                 return redirect(url_for("web.disponibilidade", **_params(sel)))
-            # Duplicada: o cliente já está nesta fila; a Tela 4 confirma isso (mensagem própria pendente)
-        # Nome e telefone não vão para a URL.
-        return redirect(url_for("web.resultado", estado=ESTADO_DO_MODO[modo], **_params(sel)))
+            gravado = {"tipo": "fila", "id": r.id_espera, "duplicada": r.duplicada}
+        # A sessão (assinada) guarda só o id do registro; nome e telefone não vão para a URL nem para ela
+        session[CHAVE_RESULTADO] = gravado
+        return redirect(url_for("web.resultado"))
     return _render_tela3(sel, modo, form)
 
 
-# ---------- Tela 4: resultado ----------
+# ---------- Tela 4: resultado (definido pelo servidor) ----------
 
-@bp.get("/resultado/<estado>")
-def resultado(estado):
-    if estado not in ESTADO_DO_MODO.values():
-        abort(404)
-    sel, _ = _selecao(request.args)
-    if not _completa(sel):
+@bp.get("/resultado")
+def resultado():
+    gravado = session.get(CHAVE_RESULTADO) or {}
+    r = resultado_servico.resultado(gravado.get("tipo"), gravado.get("id"), gravado.get("duplicada"))
+    if r is None:
         return redirect(url_for("web.escolha"))
-    if not regras.estado_coerente(estado, sel["barbeiro"]["id_barbeiro"], demo.QUALQUER):
-        return redirect(url_for("web.escolha"))
-    return render_template("tela4_resultado.html", estado=estado, sel=sel)
+    sel = {
+        "servico": r["servico"],
+        "barbeiro": {"nome": r["barbeiro"] or demo.NOME_QUALQUER},
+        "data": r["data"],
+        "hora": r["hora"],
+    }
+    return render_template("tela4_resultado.html", estado=r["estado"], duplicada=r["duplicada"], sel=sel)

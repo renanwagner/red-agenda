@@ -28,7 +28,7 @@ def _do_link(app):
 
 def test_confirmar_grava_agendamento_e_cliente(app, client):
     resp = _post(client)
-    assert resp.status_code == 302 and resp.headers["Location"].startswith("/resultado/confirmado")
+    assert resp.status_code == 302 and resp.headers["Location"] == "/resultado"
     with app.app_context():
         a = db.session.scalar(select(Agendamento).where(Agendamento.origem == "link"))
         assert (a.barbeiro_id, a.status, a.inicio.strftime("%H:%M"), a.fim.strftime("%H:%M")) == \

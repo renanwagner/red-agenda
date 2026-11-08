@@ -3,6 +3,11 @@
 {% block titulo %}Resultado – RED Barbearia{% endblock %}
 {% block conteudo %}
 {% set quando = data_br(sel.data) ~ " às " ~ sel.hora %}
+{% if estado == 'fila_horario' %}
+{% set aviso = "Vamos chamar você pelo WhatsApp se surgir vaga em qualquer barbeiro neste horário." %}
+{% else %}
+{% set aviso = "Vamos chamar você pelo WhatsApp se o " ~ sel.barbeiro.nome ~ " liberar este horário." %}
+{% endif %}
 
 {% if estado == 'confirmado' %}
 <div class="alerta alerta--sucesso" role="status" aria-live="polite">
@@ -18,19 +23,28 @@
   </tbody>
 </table>
 
+{% elif duplicada %}
+{# RF04: segunda entrada igual não é gravada; o cliente já está na fila #}
+<div class="alerta alerta--info" role="status" aria-live="polite">
+  {{ icone('info') }}
+  <h1>Você já está nesta fila de espera.</h1>
+</div>
+<p class="resumo">{{ servico_txt(sel.servico) }} · {{ sel.barbeiro.nome }} · {{ quando }}</p>
+<p class="texto">{{ aviso }}</p>
+
 {% elif estado == 'fila_horario' %}
 <div class="alerta alerta--sucesso" role="status" aria-live="polite">
   {{ icone('check') }}
   <h1>Você está na fila de espera para {{ quando }}</h1>
 </div>
-<p class="texto">Vamos chamar você pelo WhatsApp se surgir vaga em qualquer barbeiro neste horário.</p>
+<p class="texto">{{ aviso }}</p>
 
 {% else %}
 <div class="alerta alerta--sucesso" role="status" aria-live="polite">
   {{ icone('check') }}
   <h1>Você está na fila do {{ sel.barbeiro.nome }} para {{ quando }}</h1>
 </div>
-<p class="texto">Vamos chamar você pelo WhatsApp se o {{ sel.barbeiro.nome }} liberar este horário.</p>
+<p class="texto">{{ aviso }}</p>
 {% endif %}
 
 <div class="acoes">

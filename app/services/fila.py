@@ -31,8 +31,9 @@ def entrar_na_fila(id_servico, id_barbeiro, data, hora, nome, telefone):
         id_cliente = repo_clientes.obter_ou_criar_cliente(nome, normalizar_telefone(telefone))
         id_espera = repo.criar_entrada(id_cliente, id_servico, id_barbeiro, data, hora)
         if id_espera is None:
+            existente = repo.id_entrada_aguardando(id_cliente, id_servico, id_barbeiro, data, hora)
             transacao.desfazer_transacao()
-            return ResultadoFila(entrou=False, duplicada=True)
+            return ResultadoFila(entrou=False, duplicada=True, id_espera=existente)
         transacao.confirmar_transacao()
         return ResultadoFila(entrou=True, id_espera=id_espera)
     except Exception:

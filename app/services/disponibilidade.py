@@ -1,4 +1,4 @@
-"""Regras de disponibilidade da Tela 2/3/4 (RF01, RF02). Sem Flask nem acesso a banco."""
+"""Regras de disponibilidade das Telas 2 e 3 (RF01, RF02). Sem Flask nem acesso a banco."""
 
 
 def caso_disponibilidade(id_barbeiro, ids_livres_hora, qualquer):
@@ -18,8 +18,3 @@ def modo_coerente(modo, id_barbeiro, ids_livres_hora, qualquer):
     if modo == "fila_horario":
         return not especifico and not ids_livres_hora
     return False
-
-
-def estado_coerente(estado, id_barbeiro, qualquer):
-    """Tela 4: "qualquer barbeiro" só combina com o estado fila_horario."""
-    return (id_barbeiro == qualquer) == (estado == "fila_horario")
