@@ -282,3 +282,21 @@ def test_sem_secret_key_falha(monkeypatch):
     monkeypatch.delenv("SECRET_KEY", raising=False)
     with pytest.raises(RuntimeError):
         create_app()
+
+
+def test_erro_500_forcado_e_generico_sem_rastreio():
+    """RNF02: erro 500 mostra só a mensagem genérica, sem rastreio, caminho ou SQL."""
+    from app import create_app
+    app = create_app({"TESTING": True, "SECRET_KEY": "chave-de-teste",
+                      "SESSION_COOKIE_SECURE": False, "PROPAGATE_EXCEPTIONS": False})
+
+    @app.route("/forcar-erro")
+    def forcar_erro():
+        raise RuntimeError("SELECT * FROM cliente /tmp/segredo.py")
+
+    resp = app.test_client().get("/forcar-erro")
+    html = _html(resp)
+    assert resp.status_code == 500
+    assert "Não foi possível confirmar agora. Tente novamente." in html
+    for vazamento in ("Traceback", "RuntimeError", "SELECT", "segredo.py", "File \""):
+        assert vazamento not in html
