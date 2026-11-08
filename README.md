@@ -12,9 +12,8 @@ MVP de agendamento para a RED Barbearia (Estância Velha, RS). Projeto acadêmic
    - `DATABASE_URL`: por exemplo `sqlite:///red_agenda.db`.
    - `FLASK_DEBUG=1`: só em desenvolvimento local.
 4. Criar as tabelas e carregar os 7 serviços: `python scripts/criar_banco.py` (pode repetir: não duplica nem sobrescreve).
+   - Para o protótipo e a validação, use `python scripts/criar_banco.py --demo`: carrega também 3 barbeiros, janelas e agendamentos **fictícios** por 30 dias a partir de 14/11/2026. Sem janelas abertas, a Tela 1 não mostra horários.
 5. Executar: `flask --app app run`
-
-As telas do cliente ainda usam dados de demonstração; a leitura do banco entra nas próximas etapas.
 
 ## Testes
 `pytest --cov=app` (as regras de horário ficarão em `app/services`; depois use `pytest --cov=app/services`).

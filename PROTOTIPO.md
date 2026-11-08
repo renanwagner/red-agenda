@@ -1,7 +1,7 @@
 # Protótipo: roteiro de captura (4 telas)
 
 Fluxo do cliente: **Tela 1** escolha → **Tela 2** disponibilidade → **Tela 3** seus dados → **Tela 4** resultado.
-Só dados fictícios (`app/web/dados_demo.py`), sem banco e sem gravação. O que mudou em relação aos documentos está em `AJUSTES-PENDENTES.md`.
+Só dados fictícios, lidos do banco (`python scripts/criar_banco.py --demo`, em `app/repositories/demo.py`). A Tela 3 ainda não grava. O que mudou em relação aos documentos está em `AJUSTES-PENDENTES.md`.
 
 ## Rodar
 
@@ -9,6 +9,7 @@ PowerShell (Windows), na raiz do projeto:
 ```powershell
 .venv\Scripts\activate
 $env:SECRET_KEY = "qualquer-valor-local"
+python scripts/criar_banco.py --demo
 flask --app app run
 ```
 Abra **http://localhost:5000** no Chrome ou no Edge **em português**. O campo de data nativo usa o formato do idioma do navegador, então em português aparece dd/mm/aaaa. O cookie de sessão é `Secure`, e esses navegadores o aceitam em `localhost`.
@@ -21,7 +22,7 @@ Testes: `pytest -q`.
 3. Captura: menu ⋮ da barra do dispositivo → **Capture full size screenshot**.
 4. Conferir: sem barra de rolagem horizontal.
 
-Disponibilidade de demonstração (igual para qualquer data):
+Disponibilidade de demonstração para "Corte + barba – 45 min" (igual em todos os dias de 14/11/2026 a 13/12/2026; outros serviços variam conforme a duração):
 
 | Horário | Barbeiros livres |
 |---|---|
