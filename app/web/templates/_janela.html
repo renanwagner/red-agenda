@@ -3,12 +3,12 @@
 {# Mensagens do painel: sucesso anunciado (status) e erro com ícone (assertive) #}
 {% macro avisos(erro=None) -%}
 {% with mensagens = get_flashed_messages(with_categories=true) %}
-<div aria-live="polite" role="status">
+<div class="avisos" aria-live="polite" role="status">
   {% for categoria, texto in mensagens if categoria == 'sucesso' %}
   <p class="alerta alerta--sucesso">{{ icone('check') }}<span>{{ texto }}</span></p>
   {% endfor %}
 </div>
-<div aria-live="assertive">
+<div class="avisos" aria-live="assertive">
   {% for categoria, texto in mensagens if categoria == 'erro' %}
   <p class="erro">{{ icone('erro') }}<span>{{ texto }}</span></p>
   {% endfor %}

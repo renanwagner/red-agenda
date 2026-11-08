@@ -74,7 +74,7 @@ def test_rf06_dia_com_cinco_confirmados_e_um_cancelado(app, client, contas):
     assert horas == ["09:00", "09:30", "10:00", "10:30", "11:00"]
     assert "11:30 – 12:00" not in html                         # cancelado não aparece
     assert "Cliente Outro" not in html                         # agenda de outro barbeiro
-    assert "Cliente Exemplo · 51 90000-0099" in html
+    assert "Cliente Exemplo · <span class=\"agenda__fone\">51 90000-0099</span>" in html
     assert "Corte – 30 min" in html
 
 
@@ -114,7 +114,7 @@ def test_administrador_escolhe_o_barbeiro(app, client, contas):
     _entrar(client, contas["admin"])
     html = _html(client.get(f"/painel/agenda?data={DIA}&barbeiro=2"))
     assert 'for="barbeiro"' in html
-    assert "Cliente Outro · 51 90000-0098" in html
+    assert "Cliente Outro · <span class=\"agenda__fone\">51 90000-0098</span>" in html
 
 
 def test_nome_do_cliente_e_escapado(app, client, contas):

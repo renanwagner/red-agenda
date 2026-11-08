@@ -115,7 +115,7 @@ def test_cancela_e_indica_o_proximo_da_fila_do_barbeiro(app, client, contas, cen
     html = _html(resp)
     assert resp.request.path == "/painel/cancelado"                    # sem nome nem telefone na URL
     for texto in ["<h1>Agendamento cancelado.</h1>", "<h2>Próximo da fila</h2>",
-                  "<strong>Cliente Fila</strong> · 51 90000-0098", "Corte – 30 min · sábado, 06/02/2027 às 10:00",
+                  "<strong>Cliente Fila</strong> · <span class=\"agenda__fone\">51 90000-0098</span>", "Corte – 30 min · sábado, 06/02/2027 às 10:00",
                   "Fila do Barbeiro 1", "Chame o cliente pelo WhatsApp.",
                   ">Não conseguiu falar? Chamar o próximo</button>", ">Voltar à agenda</a>"]:
         assert texto in html, texto

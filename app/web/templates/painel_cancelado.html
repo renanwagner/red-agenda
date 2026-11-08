@@ -12,7 +12,7 @@
 {% if chamado %}
   <ul class="lista-limpa lista-agenda">
     <li class="agenda__item">
-      <span class="agenda__linha"><strong>{{ chamado.cliente }}</strong> · {{ chamado.telefone }}</span>
+      <span class="agenda__linha"><strong>{{ chamado.cliente }}</strong> · <span class="agenda__fone">{{ chamado.telefone }}</span></span>
       <span class="agenda__linha">{{ servico_txt(chamado.servico) }} · {{ dia_br(chamado.data) }} às {{ chamado.hora.strftime('%H:%M') }}</span>
       <span class="agenda__linha">{% if chamado.barbeiro %}Fila do {{ chamado.barbeiro }}{% else %}Fila por horário{% endif %}</span>
     </li>

@@ -49,6 +49,8 @@ body {
   outline-offset: 2px;
 }
 main:focus { outline: none; }
+/* O botão de calendário do campo de data recebe foco por dentro do campo: o contorno vai no campo */
+input[type="date"]:focus-within { outline: 3px solid var(--cor-foco); outline-offset: 2px; }
 
 /* Link de pular conteúdo (aparece só com foco) */
 .pular {
@@ -316,3 +318,7 @@ p.alerta { align-items: center; }
 }
 .agenda__hora { font-weight: 700; }
 .agenda__acao { align-self: flex-start; margin-top: 0.25rem; }   /* "Cancelar" do tamanho do texto, ≥ 44 px */
+
+/* Mensagens do painel: espaço antes do conteúdo seguinte */
+.avisos:has(.alerta, .erro) { margin-bottom: 1rem; }
+.agenda__fone { white-space: nowrap; }   /* telefone não quebra no meio */

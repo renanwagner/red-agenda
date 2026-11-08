@@ -33,7 +33,7 @@
   {% for a in dia.itens %}
   <li class="agenda__item">
     <span class="agenda__linha"><span class="agenda__hora">{{ a.inicio.strftime('%H:%M') }} – {{ a.fim.strftime('%H:%M') }}</span> · {{ servico_txt(a.servico) }}</span>
-    <span class="agenda__linha">{{ a.cliente }} · {{ a.telefone }}</span>
+    <span class="agenda__linha">{{ a.cliente }} · <span class="agenda__fone">{{ a.telefone }}</span></span>
     <a class="botao botao--secundario botao--compacto agenda__acao" href="{{ url_for('painel.cancelar', id_agendamento=a.id_agendamento) }}">Cancelar</a>
   </li>
   {% endfor %}
