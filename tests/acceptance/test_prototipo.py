@@ -300,3 +300,11 @@ def test_erro_500_forcado_e_generico_sem_rastreio():
     assert "Não foi possível confirmar agora. Tente novamente." in html
     for vazamento in ("Traceback", "RuntimeError", "SELECT", "segredo.py", "File \""):
         assert vazamento not in html
+
+
+@pytest.mark.parametrize("url", TODAS)
+def test_pagina_nao_pode_ser_exibida_em_iframe(client, url):
+    """RNF02: X-Frame-Options impede clickjacking; a CSP não muda."""
+    resp = client.get(url)
+    assert resp.headers["X-Frame-Options"] == "DENY"
+    assert resp.headers["Content-Security-Policy"] == "default-src 'self'"
