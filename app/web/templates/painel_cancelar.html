@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Cancelar agendamento – RED Barbearia{% endblock %}
+{% block conteudo %}
+<h1>Cancelar agendamento</h1>
+
+<p class="resumo">{{ dia_br(ag.inicio.date()) }} · {{ ag.inicio.strftime('%H:%M') }} – {{ ag.fim.strftime('%H:%M') }} · {{ servico_txt(ag.servico) }} · {{ ag.cliente }} · {{ ag.telefone }}</p>
+
+<form class="acoes" method="post" action="{{ url_for('painel.cancelar', id_agendamento=ag.id_agendamento) }}">
+  <input name="csrf_token" type="hidden" value="{{ csrf_token() }}">
+  <button type="submit" class="botao botao--principal">Confirmar cancelamento</button>
+</form>
+
+<p class="voltar"><a class="link" href="{{ voltar }}">Voltar</a></p>
+{% endblock %}

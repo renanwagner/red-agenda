@@ -54,10 +54,10 @@ def agendas_do_dia(data, id_barbeiro=None):
 def confirmados_do_periodo(id_barbeiro, inicio, fim):
     """Confirmados do barbeiro com início em [inicio, fim), em ordem de horário (RF06).
 
-    Cada item: inicio, fim, cliente, telefone (só dígitos), servico_nome, servico_duracao.
+    Cada item: id_agendamento, inicio, fim, cliente, telefone (só dígitos), servico_nome, servico_duracao.
     """
     linhas = db.session.execute(
-        select(Agendamento.inicio, Agendamento.fim, Cliente.nome.label("cliente"), Cliente.telefone,
+        select(Agendamento.id_agendamento, Agendamento.inicio, Agendamento.fim, Cliente.nome.label("cliente"), Cliente.telefone,
                Servico.nome.label("servico_nome"), Servico.duracao_min.label("servico_duracao"))
         .join(Cliente, Agendamento.cliente_id == Cliente.id_cliente)
         .join(Servico, Agendamento.servico_id == Servico.id_servico)

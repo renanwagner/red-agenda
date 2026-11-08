@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_icones.html" import icone %}
+{% block titulo %}Agendamento cancelado – RED Barbearia{% endblock %}
+{% block conteudo %}
+<div class="alerta alerta--sucesso" role="status" aria-live="polite">
+  {{ icone('check') }}
+  <h1>Agendamento cancelado.</h1>
+</div>
+
+<h2>Próximo da fila</h2>
+<div aria-live="polite">
+{% if chamado %}
+  <ul class="lista-limpa lista-agenda">
+    <li class="agenda__item">
+      <span class="agenda__linha"><strong>{{ chamado.cliente }}</strong> · {{ chamado.telefone }}</span>
+      <span class="agenda__linha">{{ servico_txt(chamado.servico) }} · {{ dia_br(chamado.data) }} às {{ chamado.hora.strftime('%H:%M') }}</span>
+      <span class="agenda__linha">{% if chamado.barbeiro %}Fila do {{ chamado.barbeiro }}{% else %}Fila por horário{% endif %}</span>
+    </li>
+  </ul>
+  <p class="texto">Chame o cliente pelo WhatsApp.</p>
+  <form class="acoes" method="post" action="{{ url_for('painel.cancelado_proximo') }}">
+    <input name="csrf_token" type="hidden" value="{{ csrf_token() }}">
+    <button type="submit" class="botao botao--secundario">Não conseguiu falar? Chamar o próximo</button>
+  </form>
+{% else %}
+  <p class="texto">Ninguém na fila de espera para este horário.</p>
+{% endif %}
+</div>
+
+<div class="acoes">
+  <a class="botao botao--principal" href="{{ voltar }}">Voltar à agenda</a>
+</div>
+{% endblock %}

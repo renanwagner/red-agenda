@@ -26,7 +26,7 @@ def telefone_txt(digitos):
 def _itens(id_barbeiro, primeiro_dia, ultimo_dia):
     inicio = datetime.combine(primeiro_dia, time())
     fim = datetime.combine(ultimo_dia + timedelta(days=1), time())
-    return [{"inicio": a["inicio"], "fim": a["fim"], "cliente": a["cliente"],
+    return [{"id_agendamento": a["id_agendamento"], "inicio": a["inicio"], "fim": a["fim"], "cliente": a["cliente"],
              "telefone": telefone_txt(a["telefone"]),
              "servico": {"nome": a["servico_nome"], "duracao_min": a["servico_duracao"]}}
             for a in repo.confirmados_do_periodo(id_barbeiro, inicio, fim)]

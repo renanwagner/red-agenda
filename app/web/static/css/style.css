@@ -315,3 +315,4 @@ p.alerta { align-items: center; }
   overflow-wrap: anywhere;    /* nome longo quebra em vez de alargar a página */
 }
 .agenda__hora { font-weight: 700; }
+.agenda__acao { align-self: flex-start; margin-top: 0.25rem; }   /* "Cancelar" do tamanho do texto, ≥ 44 px */

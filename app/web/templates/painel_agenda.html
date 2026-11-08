@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_janela.html" import avisos %}
 {% block titulo %}Agenda – RED Barbearia{% endblock %}
 {% block conteudo %}
 <h1>Agenda</h1>
@@ -24,6 +25,8 @@
   </div>
 </form>
 
+{{ avisos() }}
+
 {% for dia in dias %}
 <h2>{{ dia_br(dia.data) }}</h2>
 <ul class="lista-limpa lista-agenda">
@@ -31,6 +34,7 @@
   <li class="agenda__item">
     <span class="agenda__linha"><span class="agenda__hora">{{ a.inicio.strftime('%H:%M') }} – {{ a.fim.strftime('%H:%M') }}</span> · {{ servico_txt(a.servico) }}</span>
     <span class="agenda__linha">{{ a.cliente }} · {{ a.telefone }}</span>
+    <a class="botao botao--secundario botao--compacto agenda__acao" href="{{ url_for('painel.cancelar', id_agendamento=a.id_agendamento) }}">Cancelar</a>
   </li>
   {% endfor %}
 </ul>
