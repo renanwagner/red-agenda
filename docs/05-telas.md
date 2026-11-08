@@ -44,6 +44,14 @@ Fora das quatro telas do cliente; textos aprovados em 08/11/2026.
 - **Após entrar:** "Painel – {nome do barbeiro}" com botão "Sair" (POST); sair volta a "Entrar no painel". Rotas do painel sem login redirecionam para a entrada.
 - **Primeiro administrador:** criado no terminal com `python scripts/criar_admin.py`.
 
+## Painel — Janelas de atendimento (RF07)
+Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Janelas de atendimento" no painel.
+- **Componentes:** título "Janelas de atendimento"; campo "Data" e botão "Ver dia"; só para administrador, campo "Barbeiro"; lista do dia no formato "09:30 – 11:30 · Aberta", cada item com "Alterar" e "Excluir"; sem janelas: "Nenhuma janela nesta data."; formulário "Nova janela" (e página "Alterar janela") com "Início", "Fim", "Tipo" (Aberta | Bloqueada), botão "Salvar janela" e, na alteração, link "Cancelar".
+- **Sucesso:** "Janela salva." / "Janela excluída."
+- **Erros (ícone + texto, `aria-live`):** "Informe o início." / "Informe o fim."; "O fim precisa ser depois do início."; "Já existe uma janela deste tipo nesse período."; "Não é possível excluir: há agendamento confirmado nesta janela."; "Não é possível salvar: um agendamento confirmado ficaria fora do horário de atendimento."
+- **Regras:** além do RF07, nenhuma criação ou alteração (inclusive de bloqueio) pode deixar um agendamento confirmado fora de janela aberta ou dentro de bloqueio.
+- **Permissão:** o barbeiro vê e altera só as próprias janelas (de outro → 404); o administrador escolhe o barbeiro. Excluir só por POST com CSRF.
+
 ## Coerência
 - Fluxo: T1 escolhe serviço, data, horário e barbeiro → T2 mostra a disponibilidade e as opções → T3 pede os dados → T4 mostra confirmação ou fila. "Voltar" mantém a escolha; "Voltar ao início" recomeça.
 - Sem contradição segurança × usabilidade: bloqueio de login vale só para o painel; o formulário público **não usa CAPTCHA**; proteção por validação no servidor, CSRF e a regra de uma entrada de fila por cliente, serviço, data, hora e barbeiro.
