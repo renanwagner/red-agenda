@@ -7,6 +7,8 @@ Rótulos consistentes em todas as telas: "Serviço", "Barbeiro", "Data", "Horár
 ## Tela 1 — Escolha: serviço, data, horário e barbeiro
 - **Requisitos:** RF01, RNF02, RNF03, RNF04.
 - **Componentes:** título "Agende seu horário na RED Barbearia"; subtítulo "Estância Velha, RS"; logo no cabeçalho; "Escolha o serviço" com 7 botões (ex.: "Corte – 30 min", "Corte + barba – 45 min", "Barba – 15 min"); "Escolha a data" (padrão 14/11/2026, aplicada ao escolher, sem botão); "Escolha o horário" (09:30, 10:00, 10:30, 11:00); "Escolha o barbeiro" com "Qualquer barbeiro" como padrão e os 3 barbeiros; botão principal "Ver disponibilidade"; texto de apoio "Selecione serviço, data e horário para continuar" enquanto desabilitado.
+- **Horário só com fila (rodada 1 de validação, 08/11/2026):** com o serviço escolhido, o horário em que nenhum barbeiro ativo está livre aparece como "11:00 – só fila de espera" e continua escolhível (leva ao caso d da Tela 2). Barbeiro escolhido ocupado com outro livre não recebe o aviso (a Tela 2 sugere os outros, RF03).
+- **Sem voltar ao topo (rodada 1 de validação):** cada escolha recarrega a página já na seção seguinte (serviço → horário → barbeiro → "Ver disponibilidade"), por âncora no endereço, sem JavaScript.
 - **Ação e navegação:** "Ver disponibilidade" com serviço, data e horário escolhidos → Tela 2. Botão desabilitado enquanto incompleto. Entrada: link público (WhatsApp ou navegador). Sem login nem cadastro.
 - **Acessibilidade:** botões ≥ 44×44 px com 8 px de espaço; rótulos visíveis; contraste 4,5:1/3:1; foco com contorno de 3 px; seleção em texto ("Selecionado: …" e ✓), não só cor; sem rolagem horizontal em 360 px.
 - **Dados fictícios:** sete serviços com as durações do modelo; "Barbeiro 1/2/3"; sábado 14/11/2026.
@@ -51,6 +53,22 @@ Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Janelas de atendime
 - **Erros (ícone + texto, `aria-live`):** "Informe o início." / "Informe o fim."; "O fim precisa ser depois do início."; "Já existe uma janela deste tipo nesse período."; "Não é possível excluir: há agendamento confirmado nesta janela."; "Não é possível salvar: um agendamento confirmado ficaria fora do horário de atendimento."
 - **Regras:** além do RF07, nenhuma criação ou alteração (inclusive de bloqueio) pode deixar um agendamento confirmado fora de janela aberta ou dentro de bloqueio.
 - **Permissão:** o barbeiro vê e altera só as próprias janelas (de outro → 404); o administrador escolhe o barbeiro. Excluir só por POST com CSRF.
+
+## Painel — Agenda (RF06)
+Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Agenda" no painel.
+- **Componentes:** título "Agenda"; campo "Data"; só para administrador, campo "Barbeiro"; botões "Ver dia" e "Ver semana"; link "Voltar" para o painel.
+- **Lista:** agrupada por dia com título no formato "sábado, 14/11/2026"; cada item em duas linhas: "09:30 – 10:15 · Corte + barba – 45 min" e "Cliente Exemplo · 51 90000-0000". Ordem por horário.
+- **Vazio:** "Nenhum agendamento confirmado nesta data." / "Nenhum agendamento confirmado nesta semana."
+- **Regras:** só agendamentos `confirmado` (cancelados e concluídos ficam fora); semana = segunda a domingo da data escolhida; na semana, só os dias com agendamento aparecem.
+- **Permissão:** o barbeiro vê só a própria agenda (parâmetro de outro barbeiro é ignorado no servidor); o administrador escolhe o barbeiro. Só leitura (GET).
+
+## Painel — Cancelar e próximo da fila (RF05)
+Textos e regras aprovados em 08/11/2026. Acesso pelo botão "Cancelar" em cada item da Agenda.
+- **Confirmação:** título "Cancelar agendamento"; resumo "sábado, 14/11/2026 · 10:00 – 10:30 · Corte – 30 min · Cliente Exemplo · 51 90000-0000"; botão "Confirmar cancelamento"; link "Voltar" (agenda). Página em vez de `confirm()` (a CSP bloqueia script inline e evita toque acidental).
+- **Resultado** (`/painel/cancelado`, sem parâmetros): alerta de sucesso "Agendamento cancelado."; seção "Próximo da fila" com "Cliente Exemplo · 51 90000-0000", "Corte – 30 min · sábado, 14/11/2026 às 10:00" e "Fila do Barbeiro 1" ou "Fila por horário"; texto "Chame o cliente pelo WhatsApp."; botão "Não conseguiu falar? Chamar o próximo"; sem compatível: "Ninguém na fila de espera para este horário."; botão "Voltar à agenda".
+- **Erro (na Agenda):** "Este agendamento não pode mais ser cancelado."
+- **Regras:** o agendamento passa a `cancelado` (não é apagado) e o próximo compatível a `chamado`, na mesma transação. "Chamar o próximo" marca o atual como `desistiu` e indica o seguinte, um por vez. O horário liberado não fica reservado: volta a aparecer no link público.
+- **Permissão:** o barbeiro cancela só os próprios agendamentos (de outro → 404); o administrador cancela de qualquer barbeiro. Alterações só por POST com CSRF; a sessão guarda só os ids do resultado.
 
 ## Coerência
 - Fluxo: T1 escolhe serviço, data, horário e barbeiro → T2 mostra a disponibilidade e as opções → T3 pede os dados → T4 mostra confirmação ou fila. "Voltar" mantém a escolha; "Voltar ao início" recomeça.

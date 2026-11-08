@@ -28,7 +28,7 @@ Padrão: RFxx (prioridade) — comportamento, usuário, regra, evidência, depen
 - **Teste:** 1ª entrada gravada; 2ª igual recusada com mensagem de duplicidade; mesma pessoa em fila de outro horário ou de outro barbeiro é aceita.
 - **Depende de:** RF01.
 
-### RF05 (Obrigatório; no MVP desta entrega, só se sobrar tempo) — Cancelar e indicar próximo da fila
+### RF05 (Obrigatório) — Cancelar e indicar próximo da fila
 - **Comportamento:** o barbeiro autenticado cancela um agendamento e o painel indica o próximo cliente compatível da fila de espera, um por vez. O agendamento passa a `cancelado` (não é excluído); o cliente indicado passa a `chamado`.
 - **Regra:** compatível = `aguardando` para o mesmo serviço e data, com `hora_desejada` igual ao início do horário liberado e serviço que caiba no bloco liberado. Chama-se **primeiro a fila do barbeiro** (barbeiro e horário liberados) e, se não houver compatível, a **fila por horário**. Dentro de cada fila, ordem por `entrou_em`.
 - **Teste:** com entradas nas duas filas, a do barbeiro vem antes da por horário; dentro da fila, a de menor `entrou_em` que caiba; sem fila do barbeiro, chama a por horário; agendamento segue no banco como `cancelado`.
@@ -68,7 +68,7 @@ Padrão: RFxx (prioridade) — comportamento, usuário, regra, evidência, depen
 RF08 → RF07 → RF01 → RF02 → RF03 → RF04 → RF06 → RF05 → RF09 → RF10.
 
 ### Escopo do painel nesta entrega (17/11/2026)
-Entram RF08 (login), RF07 (janelas) e RF06 (agenda do dia). RF05 (cancelar e chamar o próximo) entra só se sobrar tempo; a regra de chamada da fila fica implementada e testada em `app/services`, mesmo sem a tela. RF09 e RF10 ficam de fora.
+Entram RF08 (login), RF07 (janelas), RF06 (agenda do dia e da semana) e RF05 (cancelar e chamar o próximo, com "Chamar o próximo" quando o chamado não responde; incluído em 08/11/2026). RF09 e RF10 ficam de fora.
 
 ## Requisitos não funcionais
 

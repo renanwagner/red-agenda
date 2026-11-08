@@ -3,7 +3,8 @@
 {% block conteudo %}
 <h1>Painel – {{ current_user.nome }}</h1>
 
-<ul class="lista-limpa bloco">
+<ul class="lista-limpa acoes">
+  <li><a class="botao botao--principal" href="{{ url_for('painel.agenda') }}">Agenda</a></li>
   <li><a class="botao botao--principal" href="{{ url_for('painel.janelas_lista') }}">Janelas de atendimento</a></li>
 </ul>
 

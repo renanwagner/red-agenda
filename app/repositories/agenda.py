@@ -1,9 +1,9 @@
-"""Leitura da agenda do dia: janelas e agendamentos confirmados dos barbeiros ativos."""
+"""Leitura da agenda: janelas e confirmados do dia (disponibilidade) e do período (painel, RF06)."""
 from datetime import datetime, time, timedelta
 
 from sqlalchemy import select
 
-from app.models import Agendamento, Barbeiro, JanelaAtendimento, Servico, db
+from app.models import Agendamento, Barbeiro, Cliente, JanelaAtendimento, Servico, db
 
 
 def duracao_servico_ativo(id_servico):
@@ -49,3 +49,20 @@ def agendas_do_dia(data, id_barbeiro=None):
     for a in confirmados:
         agendas[a.barbeiro_id]["ocupados"].append((a.inicio, a.fim))
     return agendas
+
+
+def confirmados_do_periodo(id_barbeiro, inicio, fim):
+    """Confirmados do barbeiro com início em [inicio, fim), em ordem de horário (RF06).
+
+    Cada item: id_agendamento, inicio, fim, cliente, telefone (só dígitos), servico_nome, servico_duracao.
+    """
+    linhas = db.session.execute(
+        select(Agendamento.id_agendamento, Agendamento.inicio, Agendamento.fim, Cliente.nome.label("cliente"), Cliente.telefone,
+               Servico.nome.label("servico_nome"), Servico.duracao_min.label("servico_duracao"))
+        .join(Cliente, Agendamento.cliente_id == Cliente.id_cliente)
+        .join(Servico, Agendamento.servico_id == Servico.id_servico)
+        .where(Agendamento.barbeiro_id == id_barbeiro, Agendamento.status == "confirmado",
+               Agendamento.inicio >= inicio, Agendamento.inicio < fim)
+        .order_by(Agendamento.inicio)
+    )
+    return [dict(linha._mapping) for linha in linhas]

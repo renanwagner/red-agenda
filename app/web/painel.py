@@ -1,11 +1,11 @@
-"""Painel do barbeiro: entrar, sair e página inicial (RF08, RNF01)."""
+"""Painel do barbeiro: entrar e sair (RF08, RNF01), janelas (RF07), agenda (RF06) e cancelamento (RF05)."""
 from datetime import date, time
 from functools import wraps
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 
-from app.services import autenticacao, catalogo, janelas
+from app.services import agenda_painel, autenticacao, cancelamento, catalogo, janelas
 from app.web.formularios import EntrarForm, JanelaForm
 
 bp = Blueprint("painel", __name__, url_prefix="/painel")
@@ -187,3 +187,94 @@ def janelas_excluir(id_janela):
     else:
         flash(MSG_EXCLUIR_COM_AGENDAMENTO, "erro")
     return redirect(_url_lista(j["data"], j["barbeiro_id"]))
+
+
+# ---------- RF06: agenda do dia e da semana ----------
+
+DIAS_SEMANA = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
+
+
+def dia_br(d):
+    """date → 'sábado, 14/11/2026'."""
+    return f"{DIAS_SEMANA[d.weekday()]}, {d.strftime('%d/%m/%Y')}"
+
+
+@bp.get("/agenda")
+@login_required
+def agenda():
+    data = _data_param()
+    id_barbeiro, ativos = _barbeiro_alvo()      # barbeiro comum: só a própria agenda
+    visao = "semana" if request.args.get("visao") == "semana" else "dia"
+    if visao == "semana":
+        dias = agenda_painel.da_semana(id_barbeiro, data)
+    else:
+        itens = agenda_painel.do_dia(id_barbeiro, data)
+        dias = [{"data": data, "itens": itens}] if itens else []
+    return render_template("painel_agenda.html", data=data, visao=visao, dias=dias,
+                           id_barbeiro=id_barbeiro, ativos=ativos, dia_br=dia_br)
+
+
+# ---------- RF05: cancelar e indicar o próximo da fila ----------
+
+CHAVE_CANCELADO = "red_cancelado"   # na sessão assinada: só os ids {"agendamento", "espera"}
+MSG_NAO_CANCELAVEL = "Este agendamento não pode mais ser cancelado."
+
+
+def _dono():
+    """Barbeiro comum: só os próprios agendamentos. Administrador: None (qualquer)."""
+    return None if current_user.administrador else current_user.id
+
+
+def _url_agenda(data, id_barbeiro):
+    extra = {"barbeiro": id_barbeiro} if current_user.administrador else {}
+    return url_for("painel.agenda", data=data.isoformat(), **extra)
+
+
+@bp.route("/agendamentos/<int:id_agendamento>/cancelar", methods=["GET", "POST"])
+@login_required
+def cancelar(id_agendamento):
+    ag = cancelamento.obter(id_agendamento, _dono())
+    if ag is None:
+        abort(404)                          # inexistente ou de outro barbeiro
+    voltar = _url_agenda(ag["inicio"].date(), ag["barbeiro_id"])
+    if request.method == "POST":            # CSRF conferido pelo CSRFProtect
+        r = cancelamento.cancelar_e_chamar(id_agendamento, _dono())
+        if r.ok:
+            session[CHAVE_CANCELADO] = {"agendamento": id_agendamento, "espera": r.id_espera}
+            return redirect(url_for("painel.cancelado"))
+        if r.erro == "nao_encontrado":
+            abort(404)
+        flash(MSG_NAO_CANCELAVEL, "erro")
+        return redirect(voltar)
+    if ag["status"] != "confirmado":
+        flash(MSG_NAO_CANCELAVEL, "erro")
+        return redirect(voltar)
+    return render_template("painel_cancelar.html", ag=ag, voltar=voltar, dia_br=dia_br)
+
+
+@bp.get("/cancelado")
+@login_required
+def cancelado():
+    estado = session.get(CHAVE_CANCELADO)
+    ag = cancelamento.obter(estado["agendamento"], _dono()) if estado else None
+    if ag is None:
+        session.pop(CHAVE_CANCELADO, None)
+        return redirect(url_for("painel.agenda"))
+    chamado = cancelamento.resumo_chamado(estado["espera"]) if estado.get("espera") else None
+    return render_template("painel_cancelado.html", chamado=chamado, dia_br=dia_br,
+                           voltar=_url_agenda(ag["inicio"].date(), ag["barbeiro_id"]))
+
+
+@bp.post("/cancelado/proximo")
+@login_required
+def cancelado_proximo():
+    """Não conseguiu falar com o chamado: ele passa a `desistiu` e o painel indica o seguinte."""
+    estado = session.get(CHAVE_CANCELADO)
+    if not estado or not estado.get("espera"):
+        return redirect(url_for("painel.cancelado"))
+    r = cancelamento.chamar_proximo(estado["agendamento"], estado["espera"], _dono())
+    if r.ok:
+        session[CHAVE_CANCELADO] = {"agendamento": estado["agendamento"], "espera": r.id_espera}
+    elif r.erro == "nao_encontrado":
+        abort(404)
+    return redirect(url_for("painel.cancelado"))

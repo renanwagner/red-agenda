@@ -4,7 +4,9 @@ from datetime import date, datetime, time
 from sqlalchemy import select
 
 from app.models import Agendamento, Barbeiro, Cliente, JanelaAtendimento, Servico
-from app.services.consulta_disponibilidade import barbeiros_livres_no_horario, sugestoes_no_horario
+from app.services.consulta_disponibilidade import (
+    barbeiros_livres_no_horario, horarios_so_fila, sugestoes_no_horario,
+)
 
 DIA = date(2026, 11, 14)
 
@@ -71,3 +73,31 @@ def test_rf03_sugere_b_quando_a_esta_ocupado(banco):
 def test_rf03_sem_ninguem_livre_lista_vazia(banco):
     (b1, _, _), corte, _, _ = _cenario(banco)
     assert sugestoes_no_horario(b1.id_barbeiro, corte.id_servico, DIA, time(10)) == []
+
+
+# ---------- Tela 1: horários que só têm fila de espera (rodada 1 de validação) ----------
+
+def test_horario_so_fila_quando_nenhum_barbeiro_ativo_esta_livre(banco):
+    _, corte, corte_barba, _ = _cenario(banco)
+    # 45 min: às 09:00 o Barbeiro 2 cabe; às 09:30 não cabe em ninguém (janela acaba às 10:00)
+    assert horarios_so_fila(corte_barba.id_servico, DIA, ["09:00", "09:30"]) == {"09:30"}
+    # 30 min: 09:30 cabe nos dois ativos
+    assert horarios_so_fila(corte.id_servico, DIA, ["09:00", "09:30"]) == set()
+
+
+def test_horario_com_um_barbeiro_ocupado_e_outro_livre_nao_e_so_fila(banco):
+    (b1, b2, _), corte, _, cliente = _cenario(banco)
+    assert horarios_so_fila(corte.id_servico, DIA, ["09:00"]) == set()     # Barbeiro 1 ocupado, 2 livre
+    banco.session.add(Agendamento(cliente_id=cliente.id_cliente, barbeiro_id=b2.id_barbeiro,
+                                  servico_id=corte.id_servico, inicio=datetime(2026, 11, 14, 9),
+                                  fim=datetime(2026, 11, 14, 9, 30), status="confirmado", origem="link"))
+    banco.session.commit()
+    assert horarios_so_fila(corte.id_servico, DIA, ["09:00"]) == {"09:00"}  # agora ninguém
+
+
+def test_horario_so_fila_com_servico_inativo_ou_sem_horarios(banco):
+    _, corte, _, _ = _cenario(banco)
+    assert horarios_so_fila(corte.id_servico, DIA, []) == set()
+    corte.ativo = False
+    banco.session.commit()
+    assert horarios_so_fila(corte.id_servico, DIA, ["09:00"]) == set()
