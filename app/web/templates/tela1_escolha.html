@@ -2,8 +2,10 @@
 {% block titulo %}Agende seu horário – RED Barbearia{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/tela1.js') }}" defer></script>{% endblock %}
 
-{% macro opcao(campo, valor, texto, ativo) -%}
+{# `proxima`: âncora da seção seguinte; a página recarrega já nela, sem voltar ao topo #}
+{% macro opcao(campo, valor, texto, ativo, proxima) -%}
 <button type="submit" name="escolher" value="{{ campo }}:{{ valor }}"
+        formaction="{{ url_for('web.escolha') }}#{{ proxima }}"
         class="opcao{% if ativo %} opcao--selecionada{% endif %}"
         aria-pressed="{{ 'true' if ativo else 'false' }}">
   {%- if ativo %}<span class="marca-sel" aria-hidden="true">✓</span>{% endif %}{{ texto }}</button>
@@ -25,7 +27,7 @@
     <legend>Escolha o serviço</legend>
     <div class="grade-botoes">
       {% for s in servicos %}
-      {{ opcao('servico', s.id_servico, servico_txt(s), sel.servico and sel.servico.id_servico == s.id_servico) }}
+      {{ opcao('servico', s.id_servico, servico_txt(s), sel.servico and sel.servico.id_servico == s.id_servico, 'horario') }}
       {% endfor %}
     </div>
     {% if sel.servico %}<p class="estado-sel">Selecionado: {{ servico_txt(sel.servico) }}</p>{% endif %}
@@ -38,31 +40,33 @@
     <p class="estado-sel">Selecionado: {{ data_br(sel.data) }}</p>
   </div>
 
-  <fieldset class="bloco">
+  <fieldset class="bloco" id="horario">
     <legend>Escolha o horário</legend>
     <div class="grade-botoes">
       {% for h in horarios %}
-      {{ opcao('hora', h, h, sel.hora == h) }}
+      {{ opcao('hora', h, h ~ (' – só fila de espera' if h in so_fila else ''), sel.hora == h, 'barbeiro') }}
       {% endfor %}
     </div>
     {% if sel.hora %}<p class="estado-sel">Selecionado: {{ sel.hora }}</p>{% endif %}
   </fieldset>
 
-  <fieldset class="bloco">
+  <fieldset class="bloco" id="barbeiro">
     <legend>Escolha o barbeiro</legend>
     <div class="grade-botoes">
       {% for b in barbeiros %}
-      {{ opcao('barbeiro', b.id_barbeiro, b.nome, sel.barbeiro.id_barbeiro == b.id_barbeiro) }}
+      {{ opcao('barbeiro', b.id_barbeiro, b.nome, sel.barbeiro.id_barbeiro == b.id_barbeiro, 'ver') }}
       {% endfor %}
     </div>
     <p class="estado-sel">Selecionado: {{ sel.barbeiro.nome }}</p>
   </fieldset>
 
+  <div id="ver">
   {% if completa %}
   <button type="submit" formaction="{{ url_for('web.disponibilidade') }}" class="botao botao--principal">Ver disponibilidade</button>
   {% else %}
   <button type="submit" class="botao botao--principal" disabled aria-describedby="apoio">Ver disponibilidade</button>
   <p id="apoio" class="apoio">Selecione serviço, data e horário para continuar</p>
   {% endif %}
+  </div>
 </form>
 {% endblock %}

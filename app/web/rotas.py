@@ -121,6 +121,8 @@ def escolha():
         sel=sel,
         completa=_completa(sel),
         foco_data=request.args.get("foco") == "data",
+        so_fila=(consulta.horarios_so_fila(sel["servico"]["id_servico"], sel["data"], horarios)
+                 if sel["servico"] else set()),
     )
 
 
