@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}Agenda – RED Barbearia{% endblock %}
+{% block conteudo %}
+<h1>Agenda</h1>
+
+<form class="bloco" method="get" action="{{ url_for('painel.agenda') }}">
+  <div class="grupo-campo">
+    <label class="rotulo" for="data">Data</label>
+    <input class="campo campo--data" type="date" id="data" name="data" value="{{ data.isoformat() }}">
+  </div>
+  {% if current_user.administrador %}
+  <div class="grupo-campo">
+    <label class="rotulo" for="barbeiro">Barbeiro</label>
+    <select class="campo" id="barbeiro" name="barbeiro">
+      {% for b in ativos %}
+      <option value="{{ b.id_barbeiro }}"{% if b.id_barbeiro == id_barbeiro %} selected{% endif %}>{{ b.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="acoes">
+    <button type="submit" class="botao botao--secundario" name="visao" value="dia">Ver dia</button>
+    <button type="submit" class="botao botao--secundario" name="visao" value="semana">Ver semana</button>
+  </div>
+</form>
+
+{% for dia in dias %}
+<h2>{{ dia_br(dia.data) }}</h2>
+<ul class="lista-limpa lista-agenda">
+  {% for a in dia.itens %}
+  <li class="agenda__item">
+    <span class="agenda__linha"><span class="agenda__hora">{{ a.inicio.strftime('%H:%M') }} – {{ a.fim.strftime('%H:%M') }}</span> · {{ servico_txt(a.servico) }}</span>
+    <span class="agenda__linha">{{ a.cliente }} · {{ a.telefone }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="texto">{% if visao == "semana" %}Nenhum agendamento confirmado nesta semana.{% else %}Nenhum agendamento confirmado nesta data.{% endif %}</p>
+{% endfor %}
+
+<p class="voltar"><a class="link" href="{{ url_for('painel.inicio') }}">Voltar</a></p>
+{% endblock %}

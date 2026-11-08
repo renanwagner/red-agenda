@@ -1,11 +1,11 @@
-"""Painel do barbeiro: entrar, sair e página inicial (RF08, RNF01)."""
+"""Painel do barbeiro: entrar e sair (RF08, RNF01), janelas (RF07) e agenda (RF06)."""
 from datetime import date, time
 from functools import wraps
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 
-from app.services import autenticacao, catalogo, janelas
+from app.services import agenda_painel, autenticacao, catalogo, janelas
 from app.web.formularios import EntrarForm, JanelaForm
 
 bp = Blueprint("painel", __name__, url_prefix="/painel")
@@ -187,3 +187,28 @@ def janelas_excluir(id_janela):
     else:
         flash(MSG_EXCLUIR_COM_AGENDAMENTO, "erro")
     return redirect(_url_lista(j["data"], j["barbeiro_id"]))
+
+
+# ---------- RF06: agenda do dia e da semana ----------
+
+DIAS_SEMANA = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
+
+
+def dia_br(d):
+    """date → 'sábado, 14/11/2026'."""
+    return f"{DIAS_SEMANA[d.weekday()]}, {d.strftime('%d/%m/%Y')}"
+
+
+@bp.get("/agenda")
+@login_required
+def agenda():
+    data = _data_param()
+    id_barbeiro, ativos = _barbeiro_alvo()      # barbeiro comum: só a própria agenda
+    visao = "semana" if request.args.get("visao") == "semana" else "dia"
+    if visao == "semana":
+        dias = agenda_painel.da_semana(id_barbeiro, data)
+    else:
+        itens = agenda_painel.do_dia(id_barbeiro, data)
+        dias = [{"data": data, "itens": itens}] if itens else []
+    return render_template("painel_agenda.html", data=data, visao=visao, dias=dias,
+                           id_barbeiro=id_barbeiro, ativos=ativos, dia_br=dia_br)
