@@ -1,5 +1,7 @@
 # Ajustes pendentes nos documentos
 
+> **Aplicados em `docs/` (02, 03, 04, 05 e 06) em 08/11/2026**, na branch `docs/ajustes-pendentes-mvp`. Os itens de código abaixo seguem pendentes (etapas de persistência e regras). Este arquivo fica como histórico.
+
 O protótipo (02/11/2026) passou a seguir um fluxo novo: o cliente escolhe serviço, data e horário e só depois o barbeiro, e há dois tipos de fila de espera. A pasta `docs/` **não foi alterada**. Abaixo está o que precisa ser atualizado nela antes de implementar as regras e o banco.
 
 ## docs/02-requisitos.md
