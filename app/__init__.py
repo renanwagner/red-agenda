@@ -35,6 +35,7 @@ def create_app(config=None):
     def cabecalhos_seguranca(resposta):
         resposta.headers["Content-Security-Policy"] = "default-src 'self'"
         resposta.headers["X-Content-Type-Options"] = "nosniff"
+        resposta.headers["X-Frame-Options"] = "DENY"  # impede o formulário em iframe (clickjacking)
         return resposta
 
     # Erros genéricos, sem rastreio (RNF02)
