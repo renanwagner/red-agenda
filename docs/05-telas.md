@@ -33,13 +33,14 @@ Rótulos consistentes em todas as telas: "Serviço", "Barbeiro", "Data", "Horár
 - **Estado `confirmado`:** alerta de sucesso com check e "Agendamento confirmado"; tabela com Serviço, Barbeiro, Data e Hora; botão "Voltar ao início".
 - **Estado `fila_horario`:** "Você está na fila de espera para 14/11/2026 às 11:00" e "Vamos chamar você pelo WhatsApp se surgir vaga em qualquer barbeiro neste horário."
 - **Estado `fila_barbeiro`:** "Você está na fila do Barbeiro 1 para 14/11/2026 às 10:00" e "Vamos chamar você pelo WhatsApp se o Barbeiro 1 liberar este horário."
+- **Estado de duplicidade (RF04):** quem já está na mesma fila (cliente, serviço, data, hora e barbeiro) não é gravado de novo; alerta de informação com ícone e título "Você já está nesta fila de espera.", resumo "Corte + barba – 45 min · Qualquer barbeiro · 14/11/2026 às 11:00" e o mesmo aviso de WhatsApp da fila.
 - **Erro genérico:** "Não foi possível confirmar agora. Tente novamente." Páginas de erro: "Requisição inválida. Tente novamente.", "Acesso não permitido." e "Página não encontrada."
-- **Acessibilidade:** ícone + título (h1) + texto em cada estado (cor só reforça); título anunciado (`role="status"`); botão ≥ 44 px; a URL não contém nome nem telefone; erro sem código nem rastreio.
+- **Acessibilidade:** ícone + título (h1) + texto em cada estado (cor só reforça); título anunciado (`role="status"`); botão ≥ 44 px; a URL (`/resultado`, sem parâmetros) não contém nome nem telefone; erro sem código nem rastreio.
 
 ## Coerência
 - Fluxo: T1 escolhe serviço, data, horário e barbeiro → T2 mostra a disponibilidade e as opções → T3 pede os dados → T4 mostra confirmação ou fila. "Voltar" mantém a escolha; "Voltar ao início" recomeça.
 - Sem contradição segurança × usabilidade: bloqueio de login vale só para o painel; o formulário público **não usa CAPTCHA**; proteção por validação no servidor, CSRF e a regra de uma entrada de fila por cliente, serviço, data, hora e barbeiro.
-- As telas só exibem o que a camada de regras devolve (sem regra de negócio no navegador). Nas telas reais, o estado da Tela 4 vem do servidor, não da URL.
+- As telas só exibem o que a camada de regras devolve (sem regra de negócio no navegador). O estado da Tela 4 vem do servidor: a sessão assinada guarda só o id do registro gravado, e a tela lê o registro no banco (não aceita estado pela URL).
 - Função desejável fora do protótipo: RF09 e RF10.
 - **Resolvido:** a sugestão de outro barbeiro é escolha do cliente (caso b), não troca automática.
 - **Hipótese a confirmar com o cliente-base:** lista vertical ou grade para os horários.

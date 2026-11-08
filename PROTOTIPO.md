@@ -86,7 +86,7 @@ Acessibilidade visível: erro com ícone, texto e correção (`aria-live`); foco
 *Extra (modo fila):* `/dados?P&hora=11:00&barbeiro=qualquer&modo=fila_horario`. O resumo começa com "Fila de espera · ..." e o botão é "Entrar na fila de espera". Os campos aparecem vazios, com os exemplos só como placeholder.
 
 ### 4. Tela 4, resultado (confirmado)
-**Caminho:** corrija o telefone na Tela 3 para `51 90000-0000` e confirme. Ou abra `/resultado/confirmado?P&hora=10:00&barbeiro=2`.
+**Caminho:** corrija o telefone na Tela 3 para `51 90000-0000` e confirme. A Tela 4 abre em `/resultado`, sem parâmetros: o resultado vem do que foi gravado, então não dá para abri-la direto pela URL.
 
 O que deve aparecer:
 - alerta verde com check e "Agendamento confirmado";
@@ -99,8 +99,9 @@ Acessibilidade visível: ícone, título (h1) e texto (a cor só reforça); tít
 
 | Estado | URL | O que deve aparecer |
 |---|---|---|
-| fila_horario | `/resultado/fila_horario?P&hora=11:00&barbeiro=qualquer` | "Você está na fila de espera para 14/11/2026 às 11:00" e "Vamos chamar você pelo WhatsApp se surgir vaga em qualquer barbeiro neste horário." |
-| fila_barbeiro | `/resultado/fila_barbeiro?P&hora=10:00&barbeiro=1` | "Você está na fila do Barbeiro 1 para 14/11/2026 às 10:00" e "Vamos chamar você pelo WhatsApp se o Barbeiro 1 liberar este horário." |
+| fila_horario | envie `/dados?P&hora=11:00&barbeiro=qualquer&modo=fila_horario` | "Você está na fila de espera para 14/11/2026 às 11:00" e "Vamos chamar você pelo WhatsApp se surgir vaga em qualquer barbeiro neste horário." |
+| fila_barbeiro | envie `/dados?P&hora=10:00&barbeiro=1&modo=fila_barbeiro` | "Você está na fila do Barbeiro 1 para 14/11/2026 às 10:00" e "Vamos chamar você pelo WhatsApp se o Barbeiro 1 liberar este horário." |
+| duplicidade | envie a mesma fila de novo | "Você já está nesta fila de espera." |
 
 ## Conferências antes de entregar
 - Lighthouse (Mobile → Accessibility) em cada tela: meta ≥ 90.
