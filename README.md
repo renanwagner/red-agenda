@@ -11,9 +11,10 @@ MVP de agendamento para a RED Barbearia (Estância Velha, RS). Projeto acadêmic
    - `SECRET_KEY`: obrigatória. Sem ela a aplicação não inicia.
    - `DATABASE_URL`: por exemplo `sqlite:///red_agenda.db`.
    - `FLASK_DEBUG=1`: só em desenvolvimento local.
-4. Executar: `flask --app app run`
+4. Criar as tabelas e carregar os 7 serviços: `python scripts/criar_banco.py` (pode repetir: não duplica nem sobrescreve).
+5. Executar: `flask --app app run`
 
-O protótipo atual usa dados de demonstração e ainda não acessa o banco. O script `scripts/criar_banco.py` (tabelas e 7 serviços) será criado na etapa de persistência.
+As telas do cliente ainda usam dados de demonstração; a leitura do banco entra nas próximas etapas.
 
 ## Testes
 `pytest --cov=app` (as regras de horário ficarão em `app/services`; depois use `pytest --cov=app/services`).
