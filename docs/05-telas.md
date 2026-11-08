@@ -37,6 +37,13 @@ Rótulos consistentes em todas as telas: "Serviço", "Barbeiro", "Data", "Horár
 - **Erro genérico:** "Não foi possível confirmar agora. Tente novamente." Páginas de erro: "Requisição inválida. Tente novamente.", "Acesso não permitido." e "Página não encontrada."
 - **Acessibilidade:** ícone + título (h1) + texto em cada estado (cor só reforça); título anunciado (`role="status"`); botão ≥ 44 px; a URL (`/resultado`, sem parâmetros) não contém nome nem telefone; erro sem código nem rastreio.
 
+## Painel — Entrar (RF08, RNF01)
+Fora das quatro telas do cliente; textos aprovados em 08/11/2026.
+- **Componentes:** título "Entrar no painel"; subtítulo "RED Barbearia – área do barbeiro"; campos "E-mail" e "Senha" com rótulo persistente; botão "Entrar".
+- **Erros (ícone + texto, `aria-live`):** credenciais inválidas, barbeiro inativo ou e-mail inexistente: mensagem única "E-mail ou senha incorretos. Confira e tente novamente."; campo vazio: "Informe o e-mail." / "Informe a senha."; após 5 falhas seguidas para o mesmo e-mail: "Muitas tentativas. Tente novamente em 15 minutos."
+- **Após entrar:** "Painel – {nome do barbeiro}" com botão "Sair" (POST); sair volta a "Entrar no painel". Rotas do painel sem login redirecionam para a entrada.
+- **Primeiro administrador:** criado no terminal com `python scripts/criar_admin.py`.
+
 ## Coerência
 - Fluxo: T1 escolhe serviço, data, horário e barbeiro → T2 mostra a disponibilidade e as opções → T3 pede os dados → T4 mostra confirmação ou fila. "Voltar" mantém a escolha; "Voltar ao início" recomeça.
 - Sem contradição segurança × usabilidade: bloqueio de login vale só para o painel; o formulário público **não usa CAPTCHA**; proteção por validação no servidor, CSRF e a regra de uma entrada de fila por cliente, serviço, data, hora e barbeiro.

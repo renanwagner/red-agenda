@@ -13,7 +13,8 @@ MVP de agendamento para a RED Barbearia (Estância Velha, RS). Projeto acadêmic
    - `FLASK_DEBUG=1`: só em desenvolvimento local.
 4. Criar as tabelas e carregar os 7 serviços: `python scripts/criar_banco.py` (pode repetir: não duplica nem sobrescreve).
    - Para o protótipo e a validação, use `python scripts/criar_banco.py --demo`: carrega também 3 barbeiros, janelas e agendamentos **fictícios** por 30 dias a partir de 14/11/2026. Sem janelas abertas, a Tela 1 não mostra horários.
-5. Executar: `flask --app app run`
+5. Criar o administrador do painel: `python scripts/criar_admin.py` (pede nome, e-mail e senha; a senha não aparece na tela e só o hash scrypt é gravado).
+6. Executar: `flask --app app run`. Fluxo do cliente em `/`; painel do barbeiro em `/painel`.
 
 ## Conferir o banco SQLite
 Sem instalar nada (usa o Python do `.venv`), da raiz do projeto:
